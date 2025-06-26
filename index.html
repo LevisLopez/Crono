@@ -609,7 +609,7 @@
             loadHistory() {
                 try {
                     // Cambié localStorage por sessionStorage según las restricciones
-                    const saved = sessionStorage.getItem('motoTripHistory');
+                const saved = localStorage.getItem('motoTripHistory');
                     return saved ? JSON.parse(saved) : [];
                 } catch {
                     return [];
