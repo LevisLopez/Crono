@@ -8,18 +8,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-	<link rel="manifest" href="manifest.json">
-	<meta name="mobile-web-app-capable" content="yes">
+    
+    <link rel="manifest" href="/Crono/manifest.json"> 
+    
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="application-name" content="Crono">
-
-
-	
-	
-	
-	
+    <meta name="application-name" content="Crono">
 
     <style>
+        /* Tu CSS existente */
         * {
             margin: 0;
             padding: 0;
@@ -374,7 +371,7 @@
                 this.history = this.loadHistory();
                 this.isTracking = false;
                 this.isRecording = false;
-                this.pausedTime = 0; // Para rastrear tiempo pausado
+                this.pausedTime = 0; 
                 
                 this.init();
             }
@@ -384,6 +381,7 @@
                 this.startGPS();
                 this.updateDisplay();
                 this.startTimer();
+                this.updateHistoryDisplay(); // Cargar y mostrar historial al inicio
             }
 
             setupEventListeners() {
@@ -427,7 +425,6 @@
                 const speed = position.coords.speed || 0;
                 this.currentSpeed = Math.max(0, speed * 3.6); // m/s to km/h
 
-                // Solo acumular distancia si está grabando
                 if (this.isRecording && this.lastPosition) {
                     const distance = this.calculateDistance(
                         this.lastPosition.coords.latitude,
@@ -436,13 +433,12 @@
                         position.coords.longitude
                     );
 
-                    // Only add distance if we're moving (speed > 1 km/h)
-                    if (this.currentSpeed > 1) {
+                    // Only add distance if we're moving (speed > 1 km/h) to filter GPS noise
+                    if (this.currentSpeed > 1) { 
                         this.tripDistance += distance;
                     }
                 }
 
-                // Velocidad máxima se actualiza siempre (incluso sin grabar)
                 if (this.currentSpeed > this.maxSpeed) {
                     this.maxSpeed = this.currentSpeed;
                 }
@@ -461,10 +457,14 @@
                         message = 'GPS no disponible';
                         break;
                     case error.TIMEOUT:
-                        message = 'GPS timeout';
+                        message = 'GPS timeout (sin señal)';
+                        break;
+                    default:
+                        message = `Error GPS: ${error.message}`;
                         break;
                 }
                 this.updateStatus(message, true);
+                console.error("GPS Error:", error); // Añadir para depuración
             }
 
             calculateDistance(lat1, lon1, lat2, lon2) {
@@ -472,8 +472,8 @@
                 const dLat = this.toRadians(lat2 - lat1);
                 const dLon = this.toRadians(lon2 - lon1);
                 const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                         Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
-                         Math.sin(dLon/2) * Math.sin(dLon/2);
+                          Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
                 return R * c;
             }
@@ -487,7 +487,6 @@
                 document.getElementById('tripDistance').textContent = this.tripDistance.toFixed(2) + ' km';
                 document.getElementById('maxSpeed').textContent = Math.round(this.maxSpeed);
                 
-                // Update trip time
                 if (this.isRecording) {
                     const tripTime = Date.now() - this.tripStartTime - this.pausedTime;
                     const minutes = Math.floor(tripTime / 60000);
@@ -495,14 +494,23 @@
                     document.getElementById('tripTime').textContent = 
                         `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 } else {
-                    // Show paused time
-                    document.getElementById('tripTime').textContent = 'PAUSA';
+                    // Si está pausado, muestra el tiempo acumulado de la pausa
+                    const totalTimeMillis = (Date.now() - this.tripStartTime - this.pausedTime) + (this.pausedTime);
+                    const minutes = Math.floor(totalTimeMillis / 60000);
+                    const seconds = Math.floor((totalTimeMillis % 60000) / 1000);
+                    document.getElementById('tripTime').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    // Si el contador de tiempo estaba pausado y GPS está activo, mostrar "PAUSA"
+                    if (this.isTracking) {
+                         document.getElementById('tripTime').textContent = 'PAUSA';
+                    }
                 }
             }
 
             toggleRecording() {
                 if (!this.isTracking) {
-                    this.updateStatus('Esperando GPS...', true);
+                    this.updateStatus('Esperando GPS para iniciar', true); // No puede iniciar si no hay GPS
                     return;
                 }
 
@@ -510,14 +518,14 @@
                 const button = document.getElementById('startStop');
                 
                 if (this.isRecording) {
-                    // Start recording
-                    this.tripStartTime = Date.now() - this.pausedTime;
+                    // Start recording (adjust start time for pause)
+                    this.tripStartTime = Date.now() - this.pausedTime; // Restablecer tiempo de inicio
                     button.textContent = 'Pause';
                     button.className = 'btn btn-pause';
                     this.updateStatus('GPS - Grabando', false);
                 } else {
                     // Pause recording
-                    this.pausedTime = Date.now() - this.tripStartTime;
+                    this.pausedTime = Date.now() - this.tripStartTime; // Acumular tiempo de pausa
                     button.textContent = 'Continue';
                     button.className = 'btn btn-start';
                     this.updateStatus('GPS - Pausado', false);
@@ -533,26 +541,26 @@
             }
 
             resetTrip() {
-                if (this.tripDistance > 0) {
-                    // Save current trip to history
+                // Solo guardar el viaje si se registró distancia
+                if (this.tripDistance > 0.01) { // Pequeño umbral para evitar viajes "falsos"
                     const tripData = {
-                        date: new Date().toLocaleDateString('es-ES'),
-                        time: new Date().toLocaleTimeString('es-ES'),
+                        date: new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'numeric', day: 'numeric' }),
+                        time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
                         distance: this.tripDistance,
                         maxSpeed: this.maxSpeed,
-                        duration: Date.now() - this.tripStartTime - this.pausedTime
+                        duration: (Date.now() - this.tripStartTime - this.pausedTime) // Duración real de grabación
                     };
                     
-                    this.history.unshift(tripData);
+                    this.history.unshift(tripData); // Añadir al inicio del historial
                     this.saveHistory();
                 }
 
                 // Reset trip data
                 this.tripDistance = 0;
                 this.maxSpeed = 0;
-                this.tripStartTime = Date.now();
-                this.pausedTime = 0;
-                this.isRecording = false;
+                this.tripStartTime = Date.now(); // Resetear el tiempo de inicio para el nuevo viaje
+                this.pausedTime = 0; // Resetear el tiempo pausado
+                this.isRecording = false; // Asegurarse de que no esté grabando al inicio
                 
                 // Reset button state
                 const button = document.getElementById('startStop');
@@ -560,8 +568,8 @@
                 button.className = 'btn btn-start';
                 
                 this.updateDisplay();
-                this.updateHistoryDisplay();
-                this.updateStatus(this.isTracking ? 'GPS - Pausado' : 'Iniciando GPS...', false);
+                this.updateHistoryDisplay(); // Refrescar la vista del historial
+                this.updateStatus(this.isTracking ? 'GPS - Pausado' : 'Buscando señal GPS...', false);
             }
 
             toggleHistory() {
@@ -584,34 +592,39 @@
                     return;
                 }
 
-                historyList.innerHTML = this.history.slice(0, 10).map(trip => `
-                    <div class="history-item">
-                        <div>
-                            <div class="history-distance">${trip.distance.toFixed(2)} km</div>
-                            <div class="history-date">${trip.date} ${trip.time}</div>
+                historyList.innerHTML = this.history.slice(0, 10).map(trip => {
+                    const minutes = Math.floor(trip.duration / 60000);
+                    const seconds = Math.floor((trip.duration % 60000) / 1000);
+                    const durationFormatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                    return `
+                        <div class="history-item">
+                            <div>
+                                <div class="history-distance">${trip.distance.toFixed(2)} km</div>
+                                <div class="history-date">${trip.date} ${trip.time}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #88ddff; font-family: 'Orbitron', monospace; background: #000; padding: 3px 6px; border-radius: 3px; border: 1px solid #333; text-shadow: 0 0 8px #88ddff;">${Math.round(trip.maxSpeed)} km/h</div>
+                                <div class="history-date">${durationFormatted}</div>
+                            </div>
                         </div>
-                        <div style="text-align: right;">
-                            <div style="color: #88ddff; font-family: 'Orbitron', monospace; background: #000; padding: 3px 6px; border-radius: 3px; border: 1px solid #333; text-shadow: 0 0 8px #88ddff;">${Math.round(trip.maxSpeed)} km/h</div>
-                            <div class="history-date">max</div>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
 
             startTimer() {
                 setInterval(() => {
-                    if (this.isTracking) {
-                        this.updateDisplay();
-                    }
+                    // Update display always, even if not recording, to show current speed and paused time
+                    this.updateDisplay(); 
                 }, 1000);
             }
 
             loadHistory() {
                 try {
-                    // Cambié localStorage por sessionStorage según las restricciones
-                const saved = localStorage.getItem('motoTripHistory');
+                    const saved = localStorage.getItem('motoTripHistory');
                     return saved ? JSON.parse(saved) : [];
-                } catch {
+                } catch (e) {
+                    console.error("Error loading history from localStorage:", e);
                     return [];
                 }
             }
@@ -621,9 +634,12 @@
                     // Keep only last 50 trips
                     const trimmedHistory = this.history.slice(0, 50);
                     localStorage.setItem('motoTripHistory', JSON.stringify(trimmedHistory));
-                } catch {
-                    // Storage full, clear old data
-                    sessionStorage.clear();
+                } catch (e) {
+                    console.error("Error saving history to localStorage:", e);
+                    // Si el problema es que el almacenamiento está lleno (raro para estos datos),
+                    // podríamos borrar algunos datos antiguos o intentar liberar espacio.
+                    // Para un enfoque simple, podrías borrar todo el historial si hay un error grave de almacenamiento.
+                    // localStorage.clear(); // ¡Usar con precaución, borraría todo!
                 }
             }
         }
@@ -634,12 +650,16 @@
         });
 
         // Register service worker for PWA
-       if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-        .then(reg => console.log('Service Worker registrado ✅', reg.scope))
-        .catch(err => console.error('Error registrando Service Worker ❌', err));
-}
-
+        if ('serviceWorker' in navigator) {
+            // ATENCIÓN: Ruta del service worker ajustada para GitHub Pages subdirectorio
+            // Opcional: para mayor robustez, puedes usar:
+            // const swUrl = new URL('service-worker.js', window.location.href).pathname;
+            // navigator.serviceWorker.register(swUrl)
+            
+            navigator.serviceWorker.register('/Crono/service-worker.js') // <<-- ASUME REPO SE LLAMA 'Crono'
+                .then(reg => console.log('Service Worker registrado ✅', reg.scope))
+                .catch(err => console.error('Error registrando Service Worker ❌', err));
+        }
     </script>
 </body>
 </html>
