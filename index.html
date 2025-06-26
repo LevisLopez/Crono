@@ -8,6 +8,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+	<link rel="manifest" href="manifest.json">
+	<meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="application-name" content="Crono">
+
+
+	
+	
+	
+	
+
     <style>
         * {
             margin: 0;
@@ -68,7 +79,7 @@
         }
 
         .speed-value {
-            font-family: 'Digital-7', 'Orbitron', monospace;
+            font-family: 'Orbitron', monospace;
             font-size: 48px;
             font-weight: bold;
             color: #ff0040;
@@ -121,7 +132,7 @@
         }
 
         .trip-value {
-            font-family: 'Digital-7', 'Orbitron', monospace;
+            font-family: 'Orbitron', monospace;
             font-size: 24px;
             font-weight: bold;
             color: #00ff88;
@@ -158,7 +169,7 @@
         }
 
         .detail-value {
-            font-family: 'Digital-7', 'Orbitron', monospace;
+            font-family: 'Orbitron', monospace;
             font-size: 18px;
             font-weight: bold;
             color: #88ddff;
@@ -273,7 +284,7 @@
         }
 
         .history-distance {
-            font-family: 'Digital-7', 'Orbitron', monospace;
+            font-family: 'Orbitron', monospace;
             font-weight: bold;
             color: #00ff88;
             background: #000;
@@ -327,7 +338,7 @@
             <div class="trip-value" id="tripDistance">0.00 km</div>
             <div class="trip-details">
                 <div class="detail-item">
-                    <span class="detail-value" id="tripTime">00:00</span>
+                    <span class="detail-value time" id="tripTime">00:00</span>
                     <div class="detail-label">Time</div>
                 </div>
                 <div class="detail-item">
@@ -344,8 +355,7 @@
         </div>
 
         <div class="history" id="historySection" style="display: none;">
-            <div class="history-title">Trip History
-</div>
+            <div class="history-title">Trip History</div>
             <div id="historyList">
                 <div class="loading">No trips recorded</div>
             </div>
@@ -363,7 +373,8 @@
                 this.maxSpeed = 0;
                 this.history = this.loadHistory();
                 this.isTracking = false;
-                this.isRecording = false; // Nueva variable para controlar la grabación
+                this.isRecording = false;
+                this.pausedTime = 0; // Para rastrear tiempo pausado
                 
                 this.init();
             }
@@ -476,18 +487,16 @@
                 document.getElementById('tripDistance').textContent = this.tripDistance.toFixed(2) + ' km';
                 document.getElementById('maxSpeed').textContent = Math.round(this.maxSpeed);
                 
-                // Update trip time only if recording
+                // Update trip time
                 if (this.isRecording) {
-                    const tripTime = Date.now() - this.tripStartTime;
+                    const tripTime = Date.now() - this.tripStartTime - this.pausedTime;
                     const minutes = Math.floor(tripTime / 60000);
                     const seconds = Math.floor((tripTime % 60000) / 1000);
                     document.getElementById('tripTime').textContent = 
                         `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                    document.getElementById('tripTime').className = 'detail-value time';
                 } else {
                     // Show paused time
                     document.getElementById('tripTime').textContent = 'PAUSA';
-                    document.getElementById('tripTime').className = 'detail-value time';
                 }
             }
 
@@ -502,15 +511,14 @@
                 
                 if (this.isRecording) {
                     // Start recording
-                    this.tripStartTime = Date.now();
+                    this.tripStartTime = Date.now() - this.pausedTime;
                     button.textContent = 'Pause';
                     button.className = 'btn btn-pause';
                     this.updateStatus('GPS - Grabando', false);
                 } else {
                     // Pause recording
-                    button.textContent = 'Continue
-
-';
+                    this.pausedTime = Date.now() - this.tripStartTime;
+                    button.textContent = 'Continue';
                     button.className = 'btn btn-start';
                     this.updateStatus('GPS - Pausado', false);
                 }
@@ -532,7 +540,7 @@
                         time: new Date().toLocaleTimeString('es-ES'),
                         distance: this.tripDistance,
                         maxSpeed: this.maxSpeed,
-                        duration: Date.now() - this.tripStartTime
+                        duration: Date.now() - this.tripStartTime - this.pausedTime
                     };
                     
                     this.history.unshift(tripData);
@@ -543,11 +551,12 @@
                 this.tripDistance = 0;
                 this.maxSpeed = 0;
                 this.tripStartTime = Date.now();
+                this.pausedTime = 0;
                 this.isRecording = false;
                 
                 // Reset button state
                 const button = document.getElementById('startStop');
-                button.textContent = 'Iniciar';
+                button.textContent = 'Start';
                 button.className = 'btn btn-start';
                 
                 this.updateDisplay();
@@ -578,7 +587,7 @@
                 historyList.innerHTML = this.history.slice(0, 10).map(trip => `
                     <div class="history-item">
                         <div>
-                            <div class="history-distance" style="font-family: 'Orbitron', monospace;">${trip.distance.toFixed(2)} km</div>
+                            <div class="history-distance">${trip.distance.toFixed(2)} km</div>
                             <div class="history-date">${trip.date} ${trip.time}</div>
                         </div>
                         <div style="text-align: right;">
@@ -591,7 +600,7 @@
 
             startTimer() {
                 setInterval(() => {
-                    if (this.isTracking && this.isRecording) {
+                    if (this.isTracking) {
                         this.updateDisplay();
                     }
                 }, 1000);
@@ -599,6 +608,7 @@
 
             loadHistory() {
                 try {
+                    // Cambié localStorage por sessionStorage según las restricciones
                     const saved = sessionStorage.getItem('motoTripHistory');
                     return saved ? JSON.parse(saved) : [];
                 } catch {
@@ -624,9 +634,12 @@
         });
 
         // Register service worker for PWA
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('data:application/javascript;base64,Y29uc3QgQ0FDSEVfTkFNRSA9ICdtb3RvLXNwZWVkb21ldGVyLXYxJzsKY29uc3QgdXJsc1RvQ2FjaGUgPSBbJy4vJ107CnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignaW5zdGFsbCcsIGV2ZW50ID0+IHsKICBldmVudC53YWl0VW50aWwoY2FjaGVzLm9wZW4oQ0FDSEVfTkFNRSkudGhlbihjYWNoZSA9PiBjYWNoZS5hZGRBbGwodXJsc1RvQ2FjaGUpKSk7Cn0pOwpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2ZldGNoJywgZXZlbnQgPT4gewogIGV2ZW50LnJlc3BvbmRXaXRoKGNhY2hlcy5tYXRjaChldmVudC5yZXF1ZXN0KS50aGVuKHJlc3BvbnNlID0+IHJlc3BvbnNlIHx8IGZldGNoKGV2ZW50LnJlcXVlc3QpKSk7Cn0pOw==');
-        }
+       if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('Service Worker registrado ✅', reg.scope))
+        .catch(err => console.error('Error registrando Service Worker ❌', err));
+}
+
     </script>
 </body>
 </html>
