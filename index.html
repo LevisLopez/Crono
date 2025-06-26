@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motorcycle Speedometer</title>
+    <meta name="theme-color" content="#1a1a1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .status {
+            font-size: 14px;
+            color: #66ff66;
+            margin-bottom: 10px;
+        }
+
+        .status.error {
+            color: #ff6666;
+        }
+
+        .speedometer {
+            background: radial-gradient(circle, #2a2a2a 0%, #1a1a1a 70%);
+            border: 4px solid #333;
+            border-radius: 50%;
+            width: 250px;
+            height: 250px;
+            margin: 0 auto 30px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+        }
+
+        .speed-display {
+            text-align: center;
+        }
+
+        .speed-value {
+            font-family: 'Digital-7', 'Orbitron', monospace;
+            font-size: 48px;
+            font-weight: bold;
+            color: #ff0040;
+            text-shadow: 0 0 20px #ff0040, 0 0 40px #ff0040;
+            margin-bottom: 5px;
+            background: #000;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid #333;
+            min-width: 120px;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .speed-value::before {
+            content: '888';
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            color: #220010;
+            z-index: -1;
+        }
+
+        .speed-unit {
+            font-size: 16px;
+            color: #888;
+        }
+
+        .trip-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .trip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .trip-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .trip-value {
+            font-family: 'Digital-7', 'Orbitron', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+            text-align: center;
+            margin-bottom: 10px;
+            background: #000;
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            letter-spacing: 1px;
+            text-shadow: 0 0 15px #00ff88;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .trip-value::before {
+            content: '888.88 km';
+            position: absolute;
+            top: 8px;
+            left: 15px;
+            color: #001a10;
+            z-index: -1;
+        }
+
+        .trip-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .detail-item {
+            text-align: center;
+        }
+
+        .detail-value {
+            font-family: 'Digital-7', 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            color: #88ddff;
+            display: block;
+            background: #000;
+            padding: 5px 8px;
+            border-radius: 4px;
+            border: 1px solid #333;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px #88ddff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .detail-value::before {
+            content: '888';
+            position: absolute;
+            top: 5px;
+            left: 8px;
+            color: #001122;
+            z-index: -1;
+        }
+
+        .detail-value.time::before {
+            content: '88:88';
+        }
+
+        .detail-label {
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-start {
+            background: linear-gradient(45deg, #00ff44, #00cc33);
+            color: white;
+        }
+
+        .btn-pause {
+            background: linear-gradient(45deg, #ffaa00, #cc8800);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff4444, #cc3333);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #4488ff, #3366cc);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .history {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .history-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-date {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .history-distance {
+            font-family: 'Digital-7', 'Orbitron', monospace;
+            font-weight: bold;
+            color: #00ff88;
+            background: #000;
+            padding: 3px 6px;
+            border-radius: 3px;
+            border: 1px solid #333;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px #00ff88;
+            display: inline-block;
+        }
+
+        .loading {
+            text-align: center;
+            color: #88ddff;
+            font-style: italic;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .speedometer {
+                width: 200px;
+                height: 200px;
+            }
+            
+            .speed-value {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="status" id="status">Starting GPS...</div>
+        </div>
+
+        <div class="speedometer">
+            <div class="speed-display">
+                <div class="speed-value" id="speed">0</div>
+                <div class="speed-unit">km/h</div>
+            </div>
+        </div>
+
+        <div class="trip-section">
+            <div class="trip-header">
+                <div class="trip-title">Current Trip</div>
+            </div>
+            <div class="trip-value" id="tripDistance">0.00 km</div>
+            <div class="trip-details">
+                <div class="detail-item">
+                    <span class="detail-value" id="tripTime">00:00</span>
+                    <div class="detail-label">Time</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-value" id="maxSpeed">0</span>
+                    <div class="detail-label">Max Speed</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-start" id="startStop">Start</button>
+            <button class="btn btn-primary" id="resetTrip">Reset Trip</button>
+            <button class="btn btn-secondary" id="toggleHistory">History</button>
+        </div>
+
+        <div class="history" id="historySection" style="display: none;">
+            <div class="history-title">Trip History
+</div>
+            <div id="historyList">
+                <div class="loading">No trips recorded</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class MotoSpeedometer {
+            constructor() {
+                this.watchId = null;
+                this.lastPosition = null;
+                this.currentSpeed = 0;
+                this.tripDistance = 0;
+                this.tripStartTime = Date.now();
+                this.maxSpeed = 0;
+                this.history = this.loadHistory();
+                this.isTracking = false;
+                this.isRecording = false; // Nueva variable para controlar la grabación
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.startGPS();
+                this.updateDisplay();
+                this.startTimer();
+            }
+
+            setupEventListeners() {
+                document.getElementById('startStop').addEventListener('click', () => this.toggleRecording());
+                document.getElementById('resetTrip').addEventListener('click', () => this.resetTrip());
+                document.getElementById('toggleHistory').addEventListener('click', () => this.toggleHistory());
+                
+                // Prevent screen from sleeping
+                if ('wakeLock' in navigator) {
+                    navigator.wakeLock.request('screen').catch(() => {});
+                }
+            }
+
+            startGPS() {
+                if (!navigator.geolocation) {
+                    this.updateStatus('GPS no disponible', true);
+                    return;
+                }
+
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 1000
+                };
+
+                this.watchId = navigator.geolocation.watchPosition(
+                    (position) => this.onPositionUpdate(position),
+                    (error) => this.onPositionError(error),
+                    options
+                );
+
+                this.updateStatus('Buscando señal GPS...');
+            }
+
+            onPositionUpdate(position) {
+                if (!this.isTracking) {
+                    this.isTracking = true;
+                    this.updateStatus(this.isRecording ? 'GPS - Grabando' : 'GPS - Pausado', false);
+                }
+
+                const speed = position.coords.speed || 0;
+                this.currentSpeed = Math.max(0, speed * 3.6); // m/s to km/h
+
+                // Solo acumular distancia si está grabando
+                if (this.isRecording && this.lastPosition) {
+                    const distance = this.calculateDistance(
+                        this.lastPosition.coords.latitude,
+                        this.lastPosition.coords.longitude,
+                        position.coords.latitude,
+                        position.coords.longitude
+                    );
+
+                    // Only add distance if we're moving (speed > 1 km/h)
+                    if (this.currentSpeed > 1) {
+                        this.tripDistance += distance;
+                    }
+                }
+
+                // Velocidad máxima se actualiza siempre (incluso sin grabar)
+                if (this.currentSpeed > this.maxSpeed) {
+                    this.maxSpeed = this.currentSpeed;
+                }
+
+                this.lastPosition = position;
+                this.updateDisplay();
+            }
+
+            onPositionError(error) {
+                let message = 'Error GPS';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        message = 'Permiso GPS denegado';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message = 'GPS no disponible';
+                        break;
+                    case error.TIMEOUT:
+                        message = 'GPS timeout';
+                        break;
+                }
+                this.updateStatus(message, true);
+            }
+
+            calculateDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371; // Earth's radius in kilometers
+                const dLat = this.toRadians(lat2 - lat1);
+                const dLon = this.toRadians(lon2 - lon1);
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                         Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
+                         Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+
+            toRadians(degrees) {
+                return degrees * (Math.PI / 180);
+            }
+
+            updateDisplay() {
+                document.getElementById('speed').textContent = Math.round(this.currentSpeed);
+                document.getElementById('tripDistance').textContent = this.tripDistance.toFixed(2) + ' km';
+                document.getElementById('maxSpeed').textContent = Math.round(this.maxSpeed);
+                
+                // Update trip time only if recording
+                if (this.isRecording) {
+                    const tripTime = Date.now() - this.tripStartTime;
+                    const minutes = Math.floor(tripTime / 60000);
+                    const seconds = Math.floor((tripTime % 60000) / 1000);
+                    document.getElementById('tripTime').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    document.getElementById('tripTime').className = 'detail-value time';
+                } else {
+                    // Show paused time
+                    document.getElementById('tripTime').textContent = 'PAUSA';
+                    document.getElementById('tripTime').className = 'detail-value time';
+                }
+            }
+
+            toggleRecording() {
+                if (!this.isTracking) {
+                    this.updateStatus('Esperando GPS...', true);
+                    return;
+                }
+
+                this.isRecording = !this.isRecording;
+                const button = document.getElementById('startStop');
+                
+                if (this.isRecording) {
+                    // Start recording
+                    this.tripStartTime = Date.now();
+                    button.textContent = 'Pause';
+                    button.className = 'btn btn-pause';
+                    this.updateStatus('GPS - Grabando', false);
+                } else {
+                    // Pause recording
+                    button.textContent = 'Continue
+
+';
+                    button.className = 'btn btn-start';
+                    this.updateStatus('GPS - Pausado', false);
+                }
+                
+                this.updateDisplay();
+            }
+
+            updateStatus(message, isError = false) {
+                const statusElement = document.getElementById('status');
+                statusElement.textContent = message;
+                statusElement.className = isError ? 'status error' : 'status';
+            }
+
+            resetTrip() {
+                if (this.tripDistance > 0) {
+                    // Save current trip to history
+                    const tripData = {
+                        date: new Date().toLocaleDateString('es-ES'),
+                        time: new Date().toLocaleTimeString('es-ES'),
+                        distance: this.tripDistance,
+                        maxSpeed: this.maxSpeed,
+                        duration: Date.now() - this.tripStartTime
+                    };
+                    
+                    this.history.unshift(tripData);
+                    this.saveHistory();
+                }
+
+                // Reset trip data
+                this.tripDistance = 0;
+                this.maxSpeed = 0;
+                this.tripStartTime = Date.now();
+                this.isRecording = false;
+                
+                // Reset button state
+                const button = document.getElementById('startStop');
+                button.textContent = 'Iniciar';
+                button.className = 'btn btn-start';
+                
+                this.updateDisplay();
+                this.updateHistoryDisplay();
+                this.updateStatus(this.isTracking ? 'GPS - Pausado' : 'Iniciando GPS...', false);
+            }
+
+            toggleHistory() {
+                const historySection = document.getElementById('historySection');
+                const isVisible = historySection.style.display !== 'none';
+                historySection.style.display = isVisible ? 'none' : 'block';
+                document.getElementById('toggleHistory').textContent = 
+                    isVisible ? 'History' : 'Hide';
+                
+                if (!isVisible) {
+                    this.updateHistoryDisplay();
+                }
+            }
+
+            updateHistoryDisplay() {
+                const historyList = document.getElementById('historyList');
+                
+                if (this.history.length === 0) {
+                    historyList.innerHTML = '<div class="loading">No hay viajes registrados</div>';
+                    return;
+                }
+
+                historyList.innerHTML = this.history.slice(0, 10).map(trip => `
+                    <div class="history-item">
+                        <div>
+                            <div class="history-distance" style="font-family: 'Orbitron', monospace;">${trip.distance.toFixed(2)} km</div>
+                            <div class="history-date">${trip.date} ${trip.time}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color: #88ddff; font-family: 'Orbitron', monospace; background: #000; padding: 3px 6px; border-radius: 3px; border: 1px solid #333; text-shadow: 0 0 8px #88ddff;">${Math.round(trip.maxSpeed)} km/h</div>
+                            <div class="history-date">max</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            startTimer() {
+                setInterval(() => {
+                    if (this.isTracking && this.isRecording) {
+                        this.updateDisplay();
+                    }
+                }, 1000);
+            }
+
+            loadHistory() {
+                try {
+                    const saved = sessionStorage.getItem('motoTripHistory');
+                    return saved ? JSON.parse(saved) : [];
+                } catch {
+                    return [];
+                }
+            }
+
+            saveHistory() {
+                try {
+                    // Keep only last 50 trips
+                    const trimmedHistory = this.history.slice(0, 50);
+                    sessionStorage.setItem('motoTripHistory', JSON.stringify(trimmedHistory));
+                } catch {
+                    // Storage full, clear old data
+                    sessionStorage.clear();
+                }
+            }
+        }
+
+        // Initialize the speedometer when page loads
+        window.addEventListener('load', () => {
+            new MotoSpeedometer();
+        });
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript;base64,Y29uc3QgQ0FDSEVfTkFNRSA9ICdtb3RvLXNwZWVkb21ldGVyLXYxJzsKY29uc3QgdXJsc1RvQ2FjaGUgPSBbJy4vJ107CnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignaW5zdGFsbCcsIGV2ZW50ID0+IHsKICBldmVudC53YWl0VW50aWwoY2FjaGVzLm9wZW4oQ0FDSEVfTkFNRSkudGhlbihjYWNoZSA9PiBjYWNoZS5hZGRBbGwodXJsc1RvQ2FjaGUpKSk7Cn0pOwpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2ZldGNoJywgZXZlbnQgPT4gewogIGV2ZW50LnJlc3BvbmRXaXRoKGNhY2hlcy5tYXRjaChldmVudC5yZXF1ZXN0KS50aGVuKHJlc3BvbnNlID0+IHJlc3BvbnNlIHx8IGZldGNoKGV2ZW50LnJlcXVlc3QpKSk7Cn0pOw==');
+        }
+    </script>
+</body>
+</html>
