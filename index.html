@@ -620,7 +620,7 @@
                 try {
                     // Keep only last 50 trips
                     const trimmedHistory = this.history.slice(0, 50);
-                    sessionStorage.setItem('motoTripHistory', JSON.stringify(trimmedHistory));
+                    localStorage.setItem('motoTripHistory', JSON.stringify(trimmedHistory));
                 } catch {
                     // Storage full, clear old data
                     sessionStorage.clear();
