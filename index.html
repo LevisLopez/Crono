@@ -10,140 +10,748 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: 'Orbitron', sans-serif; background: #000; color: white; text-align: center; padding: 20px; }
-    .speed { font-size: 48px; margin-top: 30px; }
-    .trip { font-size: 24px; margin-top: 20px; }
-    button { margin: 10px; padding: 10px 20px; font-size: 16px; }
+    /* Reset and Base Styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Arial', sans-serif;
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+        color: #fff;
+        min-height: 100vh;
+        overflow-x: hidden;
+        user-select: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .container {
+        max-width: 400px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.03); /* Ligeramente transparente para efecto blur */
+        border-radius: 15px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px); /* Para compatibilidad */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Header Styles */
+    .header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .status {
+        font-size: 14px;
+        color: #66ff66; /* Green for success/info */
+        margin-bottom: 10px;
+        min-height: 18px; /* Para evitar CLS al aparecer/desaparecer */
+    }
+
+    .status.error {
+        color: #ff6666; /* Red for errors */
+    }
+
+    /* Speedometer Display */
+    .speedometer {
+        background: radial-gradient(circle, #2a2a2a 0%, #1a1a1a 70%);
+        border: 4px solid #333;
+        border-radius: 50%;
+        width: 250px;
+        height: 250px;
+        margin: 0 auto 30px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+    }
+
+    .speed-display {
+        text-align: center;
+    }
+
+    .speed-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 48px;
+        font-weight: bold;
+        color: #ff0040; /* Reddish-pink for speed */
+        text-shadow: 0 0 20px #ff0040, 0 0 40px #ff0040;
+        margin-bottom: 5px;
+        background: #000;
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: 2px solid #333;
+        min-width: 120px;
+        letter-spacing: 2px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .speed-value::before {
+        content: '888'; /* Placeholder for monospace effect */
+        position: absolute;
+        top: 10px;
+        left: 20px;
+        color: #220010;
+        z-index: -1;
+    }
+
+    .speed-unit {
+        font-size: 16px;
+        color: #888;
+    }
+
+    /* Trip Section Styles */
+    .trip-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .trip-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .trip-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #fff;
+    }
+
+    .trip-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 24px;
+        font-weight: bold;
+        color: #00ff88; /* Green for trip distance */
+        text-align: center;
+        margin-bottom: 10px;
+        background: #000;
+        padding: 8px 15px;
+        border-radius: 6px;
+        border: 1px solid #333;
+        letter-spacing: 1px;
+        text-shadow: 0 0 15px #00ff88;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .trip-value::before {
+        content: '888.88 km'; /* Placeholder for monospace effect */
+        position: absolute;
+        top: 8px;
+        left: 15px;
+        color: #001a10;
+        z-index: -1;
+    }
+
+    .trip-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        font-size: 14px;
+    }
+
+    .detail-item {
+        text-align: center;
+    }
+
+    .detail-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 18px;
+        font-weight: bold;
+        color: #88ddff; /* Light blue for time and max speed */
+        display: block;
+        background: #000;
+        padding: 5px 8px;
+        border-radius: 4px;
+        border: 1px solid #333;
+        letter-spacing: 1px;
+        text-shadow: 0 0 10px #88ddff;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .detail-value::before {
+        content: '888'; /* Placeholder for monospace effect */
+        position: absolute;
+        top: 5px;
+        left: 8px;
+        color: #001122;
+        z-index: -1;
+    }
+
+    .detail-value.time::before {
+        content: '88:88'; /* Specific placeholder for time */
+    }
+
+    .detail-label {
+        color: #aaa;
+        margin-top: 2px;
+    }
+
+    /* Controls Section Styles */
+    .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        justify-content: center; /* Centrar botones */
+    }
+
+    .btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 15px;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Sombra para botones */
+    }
+
+    .btn-start {
+        background: linear-gradient(45deg, #00ff44, #00cc33); /* Green for start/continue */
+        color: white;
+    }
+
+    .btn-pause {
+        background: linear-gradient(45deg, #ffaa00, #cc8800); /* Orange for pause */
+        color: white;
+    }
+
+    .btn-primary {
+        background: linear-gradient(45deg, #ff4444, #cc3333); /* Red for reset */
+        color: white;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(45deg, #4488ff, #3366cc); /* Blue for history */
+        color: white;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    /* History Section Styles */
+    .history {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .history-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #fff;
+    }
+
+    .history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .history-item:last-child {
+        border-bottom: none;
+    }
+
+    .history-date {
+        font-size: 12px;
+        color: #aaa;
+    }
+
+    .history-distance {
+        font-family: 'Orbitron', monospace;
+        font-weight: bold;
+        color: #00ff88;
+        background: #000;
+        padding: 3px 6px;
+        border-radius: 3px;
+        border: 1px solid #333;
+        letter-spacing: 1px;
+        text-shadow: 0 0 8px #00ff88;
+        display: inline-block;
+    }
+
+    .loading {
+        text-align: center;
+        color: #88ddff;
+        font-style: italic;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 480px) {
+        .container {
+            padding: 15px;
+        }
+        
+        .speedometer {
+            width: 200px;
+            height: 200px;
+        }
+        
+        .speed-value {
+            font-size: 36px;
+        }
+
+        .btn {
+            min-width: unset; /* Permitir que los botones se adapten mejor */
+        }
+    }
   </style>
 </head>
 <body>
-  <h1>Velocímetro Moto</h1>
-  <div class="speed">Velocidad: <span id="speed">0</span> km/h</div>
-  <div class="trip">Trip: <span id="trip">0.00</span> km</div>
-  <div class="trip">Tiempo: <span id="time">00:00</span></div>
-  <div class="trip">Máx: <span id="max">0</span> km/h</div>
-  <button id="startStop">Iniciar</button>
-  <button id="reset">Reiniciar</button>
+    <div class="container">
+        <div class="header">
+            <div class="status" id="status">Iniciando GPS...</div>
+        </div>
 
-  <script>
-    let speedoInstance;
+        <div class="speedometer">
+            <div class="speed-display">
+                <div class="speed-value" id="speed">0</div>
+                <div class="speed-unit">km/h</div>
+            </div>
+        </div>
 
-    class MotoSpeedometer {
-      constructor() {
-        this.watchId = null;
-        this.lastPosition = null;
-        this.currentSpeed = 0;
-        this.tripDistance = parseFloat(localStorage.getItem("tripDistance")) || 0;
-        this.maxSpeed = parseFloat(localStorage.getItem("maxSpeed")) || 0;
-        this.tripStartTime = Date.now();
-        this.pausedTime = 0;
-        this.isTracking = false;
-        this.isRecording = false;
-        this.init();
-      }
+        <div class="trip-section">
+            <div class="trip-header">
+                <div class="trip-title">Viaje Actual</div>
+            </div>
+            <div class="trip-value" id="tripDistance">0.00 km</div>
+            <div class="trip-details">
+                <div class="detail-item">
+                    <span class="detail-value time" id="tripTime">00:00</span>
+                    <div class="detail-label">Tiempo</div>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-value" id="maxSpeed">0</span>
+                    <div class="detail-label">Velocidad Máxima</div>
+                </div>
+            </div>
+        </div>
 
-      init() {
-        document.getElementById("startStop").onclick = () => this.toggle();
-        document.getElementById("reset").onclick = () => this.reset();
-        this.startGPS();
-        this.startTimer();
+        <div class="controls">
+            <button class="btn btn-start" id="startStop">Iniciar</button>
+            <button class="btn btn-primary" id="resetTrip">Reiniciar Viaje</button>
+            <button class="btn btn-secondary" id="toggleHistory">Historial</button>
+        </div>
 
-        // Guardado automático cada 30 seg
-        setInterval(() => this.saveTrip(), 30000);
-      }
+        <div class="history" id="historySection" style="display: none;">
+            <div class="history-title">Historial de Viajes</div>
+            <div id="historyList">
+                <div class="loading">Cargando historial...</div>
+            </div>
+        </div>
+    </div>
 
-      toggle() {
-        this.isRecording = !this.isRecording;
-        document.getElementById("startStop").textContent = this.isRecording ? "Pausar" : "Iniciar";
-        if (this.isRecording) this.tripStartTime = Date.now() - this.pausedTime;
-        else this.pausedTime = Date.now() - this.tripStartTime;
-      }
+    <script>
+        class MotoSpeedometer {
+            constructor() {
+                this.watchId = null;
+                this.lastPosition = null;
+                this.currentSpeed = 0; // Velocidad actual
 
-      reset() {
-        this.tripDistance = 0;
-        this.maxSpeed = 0;
-        this.pausedTime = 0;
-        this.saveTrip();
-        this.updateDisplay();
-      }
+                // --- Carga de datos de localStorage para el viaje actual ---
+                this.tripDistance = parseFloat(localStorage.getItem("tripDistance")) || 0;
+                this.maxSpeed = parseFloat(localStorage.getItem("maxSpeed")) || 0;
+                this.currentTripDuration = parseInt(localStorage.getItem("currentTripDuration")) || 0; // Duración del viaje actual en ms
 
-      saveTrip() {
-        localStorage.setItem("tripDistance", this.tripDistance.toFixed(2));
-        localStorage.setItem("maxSpeed", this.maxSpeed.toFixed(2));
-      }
+                // Estado de grabación y tiempo de inicio/pausa
+                this.isRecording = localStorage.getItem("isRecording") === 'true'; // Carga el estado de grabación
+                this.tripStartTime = Date.now() - this.currentTripDuration; // Ajusta el tiempo de inicio al cargar
+                this.pausedTime = this.currentTripDuration; // Si estaba pausado, este es el tiempo acumulado
 
-      startGPS() {
-        if (!navigator.geolocation) return alert("GPS no disponible");
-        const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 1000 };
-        this.watchId = navigator.geolocation.watchPosition(
-          (pos) => this.onPosition(pos),
-          (err) => console.error(err),
-          options
-        );
-      }
+                // Historial de viajes guardados
+                this.history = this.loadHistory(); // Carga el historial completo
 
-      onPosition(position) {
-        this.currentSpeed = (position.coords.speed || 0) * 3.6;
-        if (this.currentSpeed > this.maxSpeed) this.maxSpeed = this.currentSpeed;
+                // Estado de seguimiento GPS
+                this.isTracking = false;
 
-        if (this.isRecording && this.lastPosition) {
-          const d = this.calcDistance(
-            this.lastPosition.coords.latitude, this.lastPosition.coords.longitude,
-            position.coords.latitude, position.coords.longitude
-          );
-          if (this.currentSpeed > 1) this.tripDistance += d;
+                console.log(`[Carga Inicial] Distancia: ${this.tripDistance.toFixed(2)} km, Máx: ${Math.round(this.maxSpeed)} km/h, Tiempo: ${this.formatTime(this.currentTripDuration)}`);
+                console.log(`[Carga Inicial] Grabando: ${this.isRecording}`);
+
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.startGPS();
+                this.startTimer(); // Inicia el temporizador de la interfaz
+                this.updateDisplay(); // Actualiza la interfaz con los valores cargados
+
+                // Actualiza el botón Iniciar/Pausar según el estado cargado
+                const startStopButton = document.getElementById('startStop');
+                startStopButton.textContent = this.isRecording ? "Pausar" : "Iniciar";
+                startStopButton.className = this.isRecording ? 'btn btn-pause' : 'btn btn-start';
+
+                // Guardado automático del estado del viaje actual cada 30 segundos
+                setInterval(() => this.saveCurrentTripState(), 30000);
+                console.log("[Init] Speedometer inicializado.");
+                this.updateStatus(this.isTracking ? (this.isRecording ? 'GPS - Grabando' : 'GPS - Pausado') : 'Iniciando GPS...');
+            }
+
+            setupEventListeners() {
+                document.getElementById('startStop').addEventListener('click', () => this.toggleRecording());
+                document.getElementById('resetTrip').addEventListener('click', () => this.resetTrip());
+                document.getElementById('toggleHistory').addEventListener('click', () => this.toggleHistory());
+
+                // Evitar que la pantalla se apague (Wake Lock API - experimental en algunos navegadores)
+                if ('wakeLock' in navigator) {
+                    let wakeLock = null;
+                    const requestWakeLock = async () => {
+                        try {
+                            wakeLock = await navigator.wakeLock.request('screen');
+                            console.log('Wake Lock activo.');
+                        } catch (err) {
+                            console.error('Fallo al solicitar Wake Lock:', err);
+                        }
+                    };
+                    const releaseWakeLock = () => {
+                        if (wakeLock) {
+                            wakeLock.release();
+                            wakeLock = null;
+                            console.log('Wake Lock liberado.');
+                        }
+                    };
+
+                    // Solicitar el wake lock cuando la grabación se inicia
+                    // y liberarlo cuando se detiene o se pausa si es necesario, o al cerrar la página
+                    // Para simplicidad, se solicita al inicio y se libera en beforeunload.
+                    // Podrías atar request/release a isRecording para mayor control.
+                    window.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible' && this.isRecording) {
+                            requestWakeLock();
+                        } else if (wakeLock) {
+                            releaseWakeLock();
+                        }
+                    });
+                    if (this.isRecording) { // Si ya estaba grabando al cargar
+                        requestWakeLock();
+                    }
+                    window.addEventListener('beforeunload', releaseWakeLock);
+                }
+            }
+
+            startGPS() {
+                if (!navigator.geolocation) {
+                    this.updateStatus('Error: El GPS no está disponible en este navegador.', true);
+                    console.error("GPS no disponible en el navegador.");
+                    return;
+                }
+
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000, // Intentar obtener la posición por 10 segundos
+                    maximumAge: 1000 // Aceptar una posición de hasta 1 segundo de antigüedad
+                };
+
+                this.watchId = navigator.geolocation.watchPosition(
+                    (position) => this.onPositionUpdate(position),
+                    (error) => this.onPositionError(error),
+                    options
+                );
+                this.isTracking = true;
+                console.log("[GPS] Iniciando seguimiento GPS.");
+                this.updateStatus(this.isRecording ? 'GPS - Grabando' : 'GPS - Pausado', false);
+            }
+
+            onPositionUpdate(position) {
+                if (!this.isTracking) {
+                    this.isTracking = true; // Confirma que el GPS está activo
+                }
+
+                // La velocidad de position.coords.speed viene en metros/segundo. Convertir a km/h
+                // Si position.coords.speed es null o negativo (algunos dispositivos), usar 0
+                this.currentSpeed = (position.coords.speed !== null && position.coords.speed >= 0) ? (position.coords.speed * 3.6) : 0;
+                
+                if (this.currentSpeed > this.maxSpeed) {
+                    this.maxSpeed = this.currentSpeed;
+                }
+
+                if (this.isRecording && this.lastPosition) {
+                    const distance = this.calculateDistance(
+                        this.lastPosition.coords.latitude,
+                        this.lastPosition.coords.longitude,
+                        position.coords.latitude,
+                        position.coords.longitude
+                    );
+
+                    // Solo acumular distancia si hay movimiento significativo para evitar "drift" del GPS
+                    if (this.currentSpeed > 0.5) { // Si la velocidad es mayor a 0.5 km/h
+                        this.tripDistance += distance;
+                    }
+                }
+
+                this.lastPosition = position;
+                this.updateDisplay();
+            }
+
+            onPositionError(error) {
+                let message = 'Error GPS';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        message = 'Permiso GPS denegado. Habilita el GPS en la configuración del navegador/dispositivo.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message = 'GPS no disponible. Asegúrate de tener buena señal.';
+                        break;
+                    case error.TIMEOUT:
+                        message = 'Tiempo de espera GPS agotado. Intenta de nuevo.';
+                        break;
+                    default:
+                        message = `Error GPS desconocido: ${error.message}`;
+                }
+                this.updateStatus(message, true);
+                console.error("Error GPS:", error);
+            }
+
+            calculateDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371; // Radio de la Tierra en kilómetros
+                const dLat = this.toRadians(lat2 - lat1);
+                const dLon = this.toRadians(lon2 - lon1);
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c; // Distancia en kilómetros
+            }
+
+            toRadians(degrees) {
+                return degrees * (Math.PI / 180);
+            }
+
+            updateDisplay() {
+                document.getElementById('speed').textContent = Math.round(this.currentSpeed);
+                document.getElementById('tripDistance').textContent = this.tripDistance.toFixed(2) + ' km';
+                document.getElementById('maxSpeed').textContent = Math.round(this.maxSpeed);
+            }
+
+            startTimer() {
+                // Actualiza el tiempo cada segundo
+                setInterval(() => {
+                    if (this.isRecording) {
+                        this.currentTripDuration = Date.now() - this.tripStartTime;
+                    }
+                    const formattedTime = this.formatTime(this.currentTripDuration);
+                    document.getElementById('tripTime').textContent = formattedTime;
+                }, 1000);
+                console.log("[Timer] Temporizador iniciado.");
+            }
+
+            formatTime(milliseconds) {
+                const totalSeconds = Math.floor(milliseconds / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            toggleRecording() {
+                if (!this.isTracking) {
+                    this.updateStatus('Esperando señal GPS para iniciar...', true);
+                    return;
+                }
+
+                this.isRecording = !this.isRecording;
+                const button = document.getElementById('startStop');
+                
+                if (this.isRecording) {
+                    // Si estamos iniciando la grabación, ajusta tripStartTime
+                    this.tripStartTime = Date.now() - this.pausedTime;
+                    button.textContent = 'Pausar';
+                    button.className = 'btn btn-pause';
+                    this.updateStatus('GPS - Grabando', false);
+                    console.log(`[Toggle] Iniciando grabación. tripStartTime ajustado a ${new Date(this.tripStartTime).toLocaleString()}`);
+                } else {
+                    // Si estamos pausando, guarda el tiempo transcurrido
+                    this.pausedTime = Date.now() - this.tripStartTime;
+                    button.textContent = 'Continuar';
+                    button.className = 'btn btn-start';
+                    this.updateStatus('GPS - Pausado', false);
+                    console.log(`[Toggle] Pausando grabación. pausedTime: ${this.pausedTime}`);
+                }
+                this.saveCurrentTripState(); // Guarda el estado de isRecording y tiempo
+                localStorage.setItem("isRecording", this.isRecording); // Guarda el estado de grabación
+            }
+
+            resetTrip() {
+                if (this.tripDistance > 0 || this.currentTripDuration > 0) {
+                    // Guarda el viaje actual en el historial solo si hay distancia o tiempo
+                    const tripData = {
+                        date: new Date().toLocaleDateString('es-ES'),
+                        time: this.formatTime(this.currentTripDuration), // Usa el tiempo formateado
+                        distance: this.tripDistance,
+                        maxSpeed: this.maxSpeed,
+                        durationMs: this.currentTripDuration // Guarda la duración en ms para futuras manipulaciones
+                    };
+                    
+                    this.history.unshift(tripData); // Añade al principio
+                    this.saveHistory();
+                    console.log("[Reset] Viaje actual guardado en el historial.");
+                }
+
+                // Reinicia los datos del viaje actual
+                this.tripDistance = 0;
+                this.maxSpeed = 0;
+                this.currentTripDuration = 0; // Reinicia duración
+                this.pausedTime = 0;
+                this.tripStartTime = Date.now(); // Reinicia el contador de tiempo actual para el próximo inicio
+                this.isRecording = false; // Asegura que esté en estado de "parado"
+
+                // Guarda el estado de reinicio
+                this.saveCurrentTripState();
+                localStorage.setItem("isRecording", false); // Actualiza el estado de grabación a false
+
+                // Actualiza la interfaz y botones
+                this.updateDisplay();
+                document.getElementById('startStop').textContent = 'Iniciar';
+                document.getElementById('startStop').className = 'btn btn-start';
+                document.getElementById('tripTime').textContent = '00:00'; // Asegura que el tiempo se muestre 00:00
+                this.updateHistoryDisplay(); // Actualiza la vista del historial
+                this.updateStatus(this.isTracking ? 'GPS - Pausado' : 'Iniciando GPS...', false);
+                console.log("[Reset] Datos del viaje actual reiniciados y guardados.");
+            }
+
+            saveCurrentTripState() {
+                try {
+                    localStorage.setItem("tripDistance", this.tripDistance.toFixed(2));
+                    localStorage.setItem("maxSpeed", this.maxSpeed.toFixed(2));
+                    localStorage.setItem("currentTripDuration", this.currentTripDuration.toString());
+                    console.log(`[Guardado Automático] Distancia: ${this.tripDistance.toFixed(2)}, Máx: ${Math.round(this.maxSpeed)}, Tiempo: ${this.formatTime(this.currentTripDuration)}`);
+                } catch (e) {
+                    console.error("[Error Guardando] No se pudo guardar el estado actual del viaje en localStorage:", e);
+                    this.updateStatus("Error al guardar datos del viaje. Revise la consola.", true);
+                }
+            }
+
+            loadHistory() {
+                try {
+                    const saved = localStorage.getItem('motoTripHistory');
+                    return saved ? JSON.parse(saved) : [];
+                } catch (e) {
+                    console.error("[Error Carga Historial] No se pudo cargar el historial desde localStorage:", e);
+                    this.updateStatus("Error al cargar historial. Puede que esté corrupto.", true);
+                    return []; // Devuelve un array vacío para evitar que la app falle
+                }
+            }
+
+            saveHistory() {
+                try {
+                    const trimmedHistory = this.history.slice(0, 50); // Mantener solo los últimos 50 viajes
+                    localStorage.setItem('motoTripHistory', JSON.stringify(trimmedHistory));
+                    console.log("[Guardado Historial] Historial de viajes guardado.");
+                } catch (e) {
+                    console.error("[Error Guardando Historial] No se pudo guardar el historial en localStorage:", e);
+                    this.updateStatus("Error al guardar historial. El almacenamiento podría estar lleno.", true);
+                    // Podrías considerar limpiar el historial más agresivamente aquí si el error es por cuota.
+                }
+            }
+
+            toggleHistory() {
+                const historySection = document.getElementById('historySection');
+                const isVisible = historySection.style.display !== 'none';
+                historySection.style.display = isVisible ? 'none' : 'block';
+                document.getElementById('toggleHistory').textContent = isVisible ? 'Historial' : 'Ocultar Historial';
+                
+                if (!isVisible) {
+                    this.updateHistoryDisplay(); // Actualiza el historial al mostrarlo
+                }
+            }
+
+            updateHistoryDisplay() {
+                const historyList = document.getElementById('historyList');
+                
+                if (this.history.length === 0) {
+                    historyList.innerHTML = '<div class="loading">No hay viajes registrados aún.</div>';
+                    return;
+                }
+
+                historyList.innerHTML = this.history.map(trip => {
+                    // Asegúrate de que `trip.time` y `trip.maxSpeed` existan o maneja los casos nulos
+                    const displayTime = trip.durationMs ? this.formatTime(trip.durationMs) : trip.time || 'N/A';
+                    const displayMaxSpeed = Math.round(trip.maxSpeed || 0);
+
+                    return `
+                        <div class="history-item">
+                            <div>
+                                <div class="history-distance">${trip.distance.toFixed(2)} km</div>
+                                <div class="history-date">${trip.date} (${displayTime})</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #88ddff; font-family: 'Orbitron', monospace; background: #000; padding: 3px 6px; border-radius: 3px; border: 1px solid #333; text-shadow: 0 0 8px #88ddff;">${displayMaxSpeed} km/h</div>
+                                <div class="history-date">Máx</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateStatus(message, isError = false) {
+                const statusElement = document.getElementById('status');
+                statusElement.textContent = message;
+                statusElement.className = isError ? 'status error' : 'status';
+            }
         }
 
-        this.lastPosition = position;
-        this.updateDisplay();
-      }
+        // Inicializar la aplicación cuando la ventana esté completamente cargada
+        window.addEventListener("load", () => {
+            new MotoSpeedometer();
+            console.log("[Window Load] Aplicación cargada y lista.");
+        });
 
-      calcDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371;
-        const dLat = this.toRad(lat2 - lat1);
-        const dLon = this.toRad(lon2 - lon1);
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-      }
+        // Guardar los datos del viaje y el historial cuando el usuario cierra o recarga la página
+        window.addEventListener("beforeunload", () => {
+            const currentInstance = window.speedoInstance; // Referencia a la instancia global
+            if (currentInstance) {
+                currentInstance.saveCurrentTripState(); // Guarda el estado actual del viaje
+                currentInstance.saveHistory(); // Guarda el historial completo
+                localStorage.setItem("isRecording", currentInstance.isRecording); // Guarda el último estado de grabación
+                console.log("[BeforeUnload] Datos guardados antes de cerrar/recargar.");
+            }
+        });
 
-      toRad(deg) {
-        return deg * (Math.PI / 180);
-      }
-
-      updateDisplay() {
-        document.getElementById("speed").textContent = Math.round(this.currentSpeed);
-        document.getElementById("trip").textContent = this.tripDistance.toFixed(2);
-        document.getElementById("max").textContent = Math.round(this.maxSpeed);
-      }
-
-      startTimer() {
-        setInterval(() => {
-          if (this.isRecording) {
-            const time = Date.now() - this.tripStartTime;
-            const m = Math.floor(time / 60000).toString().padStart(2, '0');
-            const s = Math.floor((time % 60000) / 1000).toString().padStart(2, '0');
-            document.getElementById("time").textContent = `${m}:${s}`;
-          }
-        }, 1000);
-      }
-    }
-
-    window.addEventListener("load", () => {
-      speedoInstance = new MotoSpeedometer();
-    });
-
-    // Guardar al cerrar o recargar
-    window.addEventListener("beforeunload", () => {
-      if (speedoInstance) speedoInstance.saveTrip();
-    });
-
-    // Registrar SW
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js").then(r =>
-        console.log("SW registrado:", r.scope)
-      ).catch(err => console.error("SW error:", err));
-    }
-  </script>
+        // --- Service Worker (PWA) ---
+        // Asegúrate de que service-worker.js esté en la raíz de tu proyecto
+        // y de que tu sitio se sirva vía HTTPS para que el Service Worker funcione.
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("service-worker.js")
+                .then(reg => console.log('Service Worker registrado con éxito. Scope:', reg.scope))
+                .catch(err => console.error('Fallo el registro del Service Worker:', err));
+        }
+    </script>
 </body>
 </html>
