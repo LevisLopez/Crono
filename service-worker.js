@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moto-speedometer-v3';
+const CACHE_NAME = 'moto-speedometer-v4';
 const urlsToCache = [
   './index.html',
   './manifest.json',
@@ -8,52 +8,28 @@ const urlsToCache = [
   './icons/icon-144x144.png',
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
-  'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap',
-  'https://fonts.gstatic.com/s/orbitron/v31/PpjWSgNDLSzNZQnEw_D5b_qF12.woff2'
+  'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;700;900&display=swap'
 ];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Opcional, pero útil
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[SW] Abriendo caché y añadiendo archivos...');
-        return cache.addAll(urlsToCache);
-      })
-      .catch(error => {
-        console.error('[SW] Error al cachear:', error);
-      })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)).catch(e => console.error('[SW] Cache error:', e))
   );
 });
 
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then((cacheNames) =>
-      Promise.all(
-        cacheNames.map((cacheName) => {
-          if (!cacheWhitelist.includes(cacheName)) {
-            console.log('[SW] Eliminando caché antigua:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      )
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  console.log('[SW] Interceptando fetch:', event.request.url);
   event.respondWith(
     caches.match(event.request)
-      .then((response) => response || fetch(event.request))
-      .catch(() => {
-        return new Response('Sin conexión disponible.', {
-          headers: { 'Content-Type': 'text/plain' }
-        });
-      })
+      .then(response => response || fetch(event.request))
+      .catch(() => new Response('Offline.', { headers: { 'Content-Type': 'text/plain' } }))
   );
 });
-
-
-
