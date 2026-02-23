@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moto-speedometer-v2';
+const CACHE_NAME = 'moto-speedometer-v1';
 const urlsToCache = [
   './index.html',
   './manifest.json',
@@ -54,4 +54,5 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
 
