@@ -1,758 +1,739 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Motorcycle Speedometer</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#1a1a1a" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>MotoSpeed GPS</title>
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#070010"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;700;900&display=swap" rel="stylesheet"/>
   <style>
-    /* Reset and Base Styles */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+    :root {
+      --v:#7c3aed; --vl:#c084fc;
+      --f:#ea580c; --fl:#fb923c; --gold:#fbbf24;
     }
+
+    html,body { height:100%; overflow:hidden; }
 
     body {
-        font-family: 'Arial', sans-serif;
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-        color: #fff;
-        min-height: 100vh;
-        overflow-x: hidden;
-        user-select: none;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
+      font-family:'Share Tech Mono',monospace;
+      background:#070010; color:#fff;
+      user-select:none;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:flex-start;
+      height:100dvh; overflow:hidden;
     }
 
-    .container {
-        max-width: 400px;
-        width: 100%;
-        margin: 0 auto;
-        padding: 20px;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        background: rgba(255, 255, 255, 0.03); /* Ligeramente transparente para efecto blur */
-        border-radius: 15px;
-        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px); /* Para compatibilidad */
-        border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Grid background */
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(234,88,12,0.04) 1px,transparent 1px);
+      background-size:30px 30px;
+      pointer-events:none; z-index:0;
+    }
+    /* Ambient glow */
+    body::after {
+      content:''; position:fixed; inset:0;
+      background:
+        radial-gradient(ellipse at 20% 10%,rgba(124,58,237,0.15) 0%,transparent 45%),
+        radial-gradient(ellipse at 80% 90%,rgba(234,88,12,0.12) 0%,transparent 45%);
+      pointer-events:none; z-index:0;
     }
 
-    /* Header Styles */
+    /* Scan line */
+    .scan {
+      position:fixed; left:0; right:0; height:2px; z-index:50; pointer-events:none;
+      background:linear-gradient(90deg,transparent,var(--vl),var(--fl),transparent);
+      box-shadow:0 0 12px rgba(192,132,252,0.8),0 0 12px rgba(251,146,60,0.6);
+      animation:scanDown 5s linear infinite;
+    }
+    @keyframes scanDown {
+      0%{top:-2px;opacity:0;} 4%{opacity:1;} 96%{opacity:1;} 100%{top:100%;opacity:0;}
+    }
+
+    #particles { position:fixed; inset:0; z-index:1; pointer-events:none; }
+
+    /* Corner accents */
+    .corner-tr {
+      position:fixed; top:0; right:0; width:36px; height:36px; z-index:15; pointer-events:none;
+      background:linear-gradient(225deg,var(--v) 45%,transparent 45%);
+    }
+    .corner-bl {
+      position:fixed; bottom:0; left:0; width:22px; height:22px; z-index:15; pointer-events:none;
+      background:linear-gradient(45deg,var(--f) 45%,transparent 45%);
+    }
+
+    /* Flames */
+    .flames {
+      position:fixed; bottom:0; left:0; right:0; height:70px;
+      pointer-events:none; z-index:2; overflow:hidden;
+    }
+    .flame { position:absolute; bottom:0; border-radius:50% 50% 20% 20%; animation:flameUp linear infinite; }
+    .flame:nth-child(1){left:3%;  width:3px;background:rgba(168,85,247,0.6);animation-duration:2.0s;animation-delay:0.0s;}
+    .flame:nth-child(2){left:12%; width:4px;background:rgba(249,115,22,0.7);animation-duration:1.7s;animation-delay:0.4s;}
+    .flame:nth-child(3){left:22%; width:3px;background:rgba(251,191,36,0.5);animation-duration:2.3s;animation-delay:0.8s;}
+    .flame:nth-child(4){left:33%; width:5px;background:rgba(168,85,247,0.5);animation-duration:1.5s;animation-delay:0.2s;}
+    .flame:nth-child(5){left:45%; width:3px;background:rgba(249,115,22,0.8);animation-duration:2.1s;animation-delay:0.6s;}
+    .flame:nth-child(6){left:56%; width:4px;background:rgba(168,85,247,0.6);animation-duration:1.9s;animation-delay:1.0s;}
+    .flame:nth-child(7){left:67%; width:3px;background:rgba(251,191,36,0.6);animation-duration:2.2s;animation-delay:0.3s;}
+    .flame:nth-child(8){left:78%; width:5px;background:rgba(249,115,22,0.7);animation-duration:1.6s;animation-delay:0.7s;}
+    .flame:nth-child(9){left:90%; width:3px;background:rgba(168,85,247,0.5);animation-duration:2.4s;animation-delay:0.1s;}
+    @keyframes flameUp {
+      0%{height:0;opacity:0;transform:scaleX(1);}
+      15%{opacity:1;} 75%{opacity:0.5;}
+      100%{height:65px;opacity:0;transform:scaleX(0.2) translateY(-8px);}
+    }
+
+    /* ── APP WRAPPER ── */
+    .app {
+      position:relative; z-index:10;
+      width:100%; max-width:420px;
+      height:100dvh;
+      display:flex; flex-direction:column;
+      overflow:hidden;
+    }
+
+    /* ── HEADER ── */
     .header {
-        text-align: center;
-        margin-bottom: 30px;
+      flex-shrink:0;
+      padding:10px 16px 8px;
+      display:flex; justify-content:space-between; align-items:center;
+      border-bottom:1px solid rgba(124,58,237,0.3);
+      background:linear-gradient(90deg,rgba(124,58,237,0.08),rgba(234,88,12,0.06));
     }
+    .logo {
+      font-family:'Orbitron',sans-serif;
+      font-size:16px; font-weight:900; letter-spacing:3px;
+      background:linear-gradient(135deg,var(--vl),var(--fl));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .header-right { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
 
     .status {
-        font-size: 14px;
-        color: #66ff66; /* Green for success/info */
-        margin-bottom: 10px;
-        min-height: 18px; /* Para evitar CLS al aparecer/desaparecer */
+      font-size:8px; letter-spacing:3px; text-transform:uppercase;
+      display:flex; align-items:center; gap:5px; color:rgba(255,255,255,0.3);
     }
+    .status-dot { width:6px; height:6px; border-radius:50%; background:#333; transition:all 0.3s; }
+    .status.active { color:#4ade80; }
+    .status.active .status-dot { background:#4ade80; box-shadow:0 0 8px #4ade80; animation:sDot 2s infinite; }
+    .status.error  { color:#ef4444; }
+    .status.error  .status-dot { background:#ef4444; box-shadow:0 0 8px #ef4444; }
+    @keyframes sDot { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.5);opacity:0.4;} }
 
-    .status.error {
-        color: #ff6666; /* Red for errors */
+    .rec-badge {
+      font-size:7px; letter-spacing:2px; padding:2px 7px;
+      border:1px solid rgba(251,146,60,0.5); color:var(--fl);
+      box-shadow:0 0 6px rgba(251,146,60,0.3);
+      animation:recB 1.6s ease-in-out infinite; display:none;
     }
+    .rec-badge.on { display:block; }
+    @keyframes recB { 0%,100%{opacity:1;} 50%{opacity:0.4;box-shadow:0 0 14px rgba(251,146,60,0.8);} }
 
-    /* Speedometer Display */
-    .speedometer {
-        background: radial-gradient(circle, #2a2a2a 0%, #1a1a1a 70%);
-        border: 4px solid #333;
-        border-radius: 50%;
-        width: 250px;
-        height: 250px;
-        margin: 0 auto 30px;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+    /* ── SPEED + GEAR ── */
+    .speed-section {
+      flex-shrink:0;
+      padding:14px 16px 8px;
+      display:flex; align-items:center; justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,0.04);
     }
+    .speed-left { position:relative; display:flex; flex-direction:column; }
 
-    .speed-display {
-        text-align: center;
+    /* Motion streaks */
+    .streaks {
+      position:absolute; right:calc(100% + 5px); top:0; bottom:0;
+      display:flex; flex-direction:column; justify-content:center; gap:7px;
+      pointer-events:none;
     }
+    .streak { height:2px; border-radius:1px; transform-origin:right center; animation:stk 2.2s ease-in-out infinite; }
+    .streak:nth-child(1){width:48px;background:linear-gradient(90deg,transparent,var(--vl));animation-delay:0.0s;}
+    .streak:nth-child(2){width:28px;background:linear-gradient(90deg,transparent,var(--fl));animation-delay:0.4s;}
+    .streak:nth-child(3){width:60px;background:linear-gradient(90deg,transparent,var(--vl));animation-delay:0.8s;}
+    .streak:nth-child(4){width:20px;background:linear-gradient(90deg,transparent,var(--fl));animation-delay:0.2s;}
+    .streak:nth-child(5){width:38px;background:linear-gradient(90deg,transparent,var(--vl));animation-delay:1.0s;}
+    @keyframes stk { 0%,100%{transform:scaleX(0.1);opacity:0;} 45%,55%{transform:scaleX(1);opacity:1;} }
 
-    .speed-value {
-        font-family: 'Orbitron', monospace;
-        font-size: 48px;
-        font-weight: bold;
-        color: #ff0040; /* Reddish-pink for speed */
-        text-shadow: 0 0 20px #ff0040, 0 0 40px #ff0040;
-        margin-bottom: 5px;
-        background: #000;
-        padding: 10px 20px;
-        border-radius: 8px;
-        border: 2px solid #333;
-        min-width: 120px;
-        letter-spacing: 2px;
-        position: relative;
-        overflow: hidden;
+    .speed-num {
+      font-family:'Exo 2',sans-serif;
+      font-size:clamp(80px,22vw,104px); font-weight:900;
+      line-height:0.85; letter-spacing:-5px; color:#fff;
+      position:relative;
+      text-shadow:0 0 20px rgba(192,132,252,0.9),0 0 50px rgba(124,58,237,0.5),3px 3px 0 rgba(251,146,60,0.15);
+      animation:nFuse 3s ease-in-out infinite;
     }
-
-    .speed-value::before {
-        content: '888'; /* Placeholder for monospace effect */
-        position: absolute;
-        top: 10px;
-        left: 20px;
-        color: #220010;
-        z-index: -1;
+    .speed-num.fast { animation:nFuse 3s ease-in-out infinite, shake 0.12s linear infinite; }
+    @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-2px);} 75%{transform:translateX(2px);} }
+    @keyframes nFuse {
+      0%,100%{text-shadow:0 0 20px rgba(192,132,252,0.9),0 0 50px rgba(124,58,237,0.5),3px 3px 0 rgba(251,146,60,0.15);}
+      50%{text-shadow:0 0 35px rgba(251,146,60,1),0 0 70px rgba(234,88,12,0.6),-3px -3px 0 rgba(192,132,252,0.3);}
     }
+    .speed-num::before {
+      content:attr(data-v); position:absolute; inset:0;
+      color:var(--vl); opacity:0.15;
+      clip-path:polygon(0 20%,100% 20%,100% 33%,0 33%);
+      animation:glA 5s infinite;
+    }
+    .speed-num::after {
+      content:attr(data-v); position:absolute; inset:0;
+      color:var(--fl); opacity:0.15;
+      clip-path:polygon(0 65%,100% 65%,100% 78%,0 78%);
+      animation:glB 5s infinite;
+    }
+    @keyframes glA { 0%,85%,100%{transform:translateX(3px);opacity:0.15;} 87%{transform:translateX(-8px);opacity:0.55;} 89%{transform:translateX(6px);opacity:0.1;} 91%{transform:translateX(0);opacity:0.45;} }
+    @keyframes glB { 0%,81%,100%{transform:translateX(-3px);opacity:0.15;} 83%{transform:translateX(8px);opacity:0.55;} 85%{transform:translateX(-6px);opacity:0.1;} 87%{transform:translateX(0);opacity:0.45;} }
 
     .speed-unit {
-        font-size: 16px;
-        color: #888;
+      font-size:9px; letter-spacing:5px; margin-top:4px;
+      background:linear-gradient(90deg,var(--vl),var(--fl));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
     }
 
-    /* Trip Section Styles */
-    .trip-section {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 15px;
-        padding: 20px;
-        margin-bottom: 20px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Gear badge */
+    .gear-wrap { display:flex; flex-direction:column; align-items:center; gap:5px; }
+    .gear-badge {
+      width:68px; height:68px; border-radius:50%;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      border:2px solid var(--v);
+      background:rgba(124,58,237,0.12);
+      box-shadow:0 0 20px rgba(124,58,237,0.4),inset 0 0 20px rgba(124,58,237,0.04);
+      transition:all 0.3s;
     }
-
-    .trip-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
+    .gear-badge.flash { animation:gFlash 0.45s ease-out forwards; }
+    @keyframes gFlash {
+      0%{box-shadow:0 0 50px rgba(192,132,252,1),inset 0 0 30px rgba(192,132,252,0.4);border-color:var(--vl);}
+      100%{box-shadow:0 0 20px rgba(124,58,237,0.4),inset 0 0 20px rgba(124,58,237,0.04);border-color:var(--v);}
     }
-
-    .trip-title {
-        font-size: 18px;
-        font-weight: bold;
-        color: #fff;
+    .gear-badge.warn {
+      border-color:var(--fl);
+      animation:wPulse 0.5s ease-in-out infinite;
     }
-
-    .trip-value {
-        font-family: 'Orbitron', monospace;
-        font-size: 24px;
-        font-weight: bold;
-        color: #00ff88; /* Green for trip distance */
-        text-align: center;
-        margin-bottom: 10px;
-        background: #000;
-        padding: 8px 15px;
-        border-radius: 6px;
-        border: 1px solid #333;
-        letter-spacing: 1px;
-        text-shadow: 0 0 15px #00ff88;
-        position: relative;
-        overflow: hidden;
+    @keyframes wPulse {
+      0%,100%{box-shadow:0 0 18px rgba(251,146,60,0.5);}
+      50%{box-shadow:0 0 38px rgba(251,146,60,1),0 0 60px rgba(251,146,60,0.3);}
     }
-
-    .trip-value::before {
-        content: '888.88 km'; /* Placeholder for monospace effect */
-        position: absolute;
-        top: 8px;
-        left: 15px;
-        color: #001a10;
-        z-index: -1;
+    .gear-num {
+      font-family:'Orbitron',sans-serif;
+      font-size:26px; font-weight:900; line-height:1; color:var(--vl);
+      text-shadow:0 0 14px rgba(192,132,252,0.8);
     }
+    .gear-lbl { font-size:7px; letter-spacing:2px; color:rgba(255,255,255,0.25); margin-top:1px; }
+    .gear-name { font-size:8px; letter-spacing:2px; color:rgba(192,132,252,0.55); }
 
-    .trip-details {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        font-size: 14px;
+    /* Shift warning banner */
+    .shift-alert {
+      display:none; margin:0 16px;
+      padding:5px 12px;
+      background:rgba(251,146,60,0.1);
+      border:1px solid rgba(251,146,60,0.5); border-left:3px solid var(--fl);
+      font-size:9px; letter-spacing:3px; color:var(--fl); text-align:center;
+      animation:aPulse 0.8s ease-in-out infinite;
     }
+    .shift-alert.on { display:block; }
+    @keyframes aPulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 
-    .detail-item {
-        text-align: center;
+    /* ── DATA PANEL ── */
+    .data-panel {
+      flex-shrink:0; margin:8px 16px;
+      border:1px solid rgba(124,58,237,0.2);
+      border-left:2px solid var(--v); border-right:2px solid var(--f);
+      background:rgba(124,58,237,0.03);
+      padding:10px 14px;
     }
-
-    .detail-value {
-        font-family: 'Orbitron', monospace;
-        font-size: 18px;
-        font-weight: bold;
-        color: #88ddff; /* Light blue for time and max speed */
-        display: block;
-        background: #000;
-        padding: 5px 8px;
-        border-radius: 4px;
-        border: 1px solid #333;
-        letter-spacing: 1px;
-        text-shadow: 0 0 10px #88ddff;
-        position: relative;
-        overflow: hidden;
+    .panel-title {
+      font-size:7px; letter-spacing:4px; color:rgba(255,255,255,0.18);
+      margin-bottom:7px; display:flex; align-items:center; gap:8px;
     }
+    .panel-title::after { content:''; flex:1; height:1px;
+      background:linear-gradient(90deg,rgba(124,58,237,0.3),rgba(234,88,12,0.3)); }
 
-    .detail-value::before {
-        content: '888'; /* Placeholder for monospace effect */
-        position: absolute;
-        top: 5px;
-        left: 8px;
-        color: #001122;
-        z-index: -1;
+    .trip-distance {
+      font-family:'Orbitron',sans-serif;
+      font-size:26px; font-weight:700; letter-spacing:2px;
+      text-align:center; margin-bottom:8px;
+      background:linear-gradient(135deg,var(--vl),var(--fl));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
     }
-
-    .detail-value.time::before {
-        content: '88:88'; /* Specific placeholder for time */
+    .metrics { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .metric { text-align:center; }
+    .metric-label { font-size:7px; letter-spacing:3px; color:rgba(255,255,255,0.18); margin-bottom:3px; }
+    .metric-val {
+      font-family:'Orbitron',sans-serif; font-size:17px; font-weight:700;
+      display:block; letter-spacing:1px; animation:mGlow 3s ease-in-out infinite;
     }
+    .metric-val.time { color:var(--vl); text-shadow:0 0 10px rgba(192,132,252,0.5); }
+    .metric-val.mspd { color:var(--fl); text-shadow:0 0 10px rgba(251,146,60,0.5); transition:all 0.3s; }
+    .metric-val.mspd.pop { animation:maxPop 0.5s ease-out; }
+    @keyframes maxPop { 0%{text-shadow:0 0 30px rgba(251,191,36,1),0 0 60px rgba(251,191,36,0.6);color:#fbbf24;transform:scale(1.2);} 100%{transform:scale(1);} }
+    @keyframes mGlow { 0%,100%{filter:brightness(1);} 50%{filter:brightness(1.4);} }
 
-    .detail-label {
-        color: #aaa;
-        margin-top: 2px;
+    /* Progress bar */
+    .prog-wrap { flex-shrink:0; padding:6px 16px 4px; }
+    .prog-meta { display:flex; justify-content:space-between; margin-bottom:4px; }
+    .prog-meta span { font-size:7px; letter-spacing:1px; color:rgba(255,255,255,0.18); }
+    .prog-track { height:5px; background:rgba(255,255,255,0.05); border-radius:3px; position:relative; }
+    .prog-fill {
+      height:100%; width:0%; border-radius:3px;
+      background:linear-gradient(90deg,#5b21b6,var(--v),var(--f),var(--gold));
+      box-shadow:0 0 10px rgba(124,58,237,0.7),0 0 20px rgba(234,88,12,0.3);
+      transition:width 0.8s ease; position:relative;
     }
+    .prog-fill::after {
+      content:''; position:absolute; right:-5px; top:50%; transform:translateY(-50%);
+      width:10px; height:10px; border-radius:50%; background:#fff;
+      box-shadow:0 0 8px var(--vl),0 0 16px var(--f);
+      animation:dPop 1.5s ease-in-out infinite;
+    }
+    @keyframes dPop { 0%,100%{transform:translateY(-50%) scale(1);} 50%{transform:translateY(-50%) scale(1.5);} }
 
-    /* Controls Section Styles */
+    /* ── CONTROLS ── */
     .controls {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-        justify-content: center; /* Centrar botones */
+      flex-shrink:0;
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:8px; padding:8px 16px 6px;
     }
-
     .btn {
-        flex: 1;
-        min-width: 120px;
-        padding: 15px;
-        border: none;
-        border-radius: 10px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Sombra para botones */
+      padding:13px 8px; border:none;
+      font-family:'Orbitron',sans-serif; font-size:10px; font-weight:700;
+      letter-spacing:2px; text-transform:uppercase; cursor:pointer;
+      transition:all 0.2s;
+      clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%);
+      position:relative; overflow:hidden;
     }
-
-    .btn-start {
-        background: linear-gradient(45deg, #00ff44, #00cc33); /* Green for start/continue */
-        color: white;
+    .btn::after {
+      content:''; position:absolute; top:0; left:-100%; width:50%; height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+      animation:bShine 3s linear infinite;
     }
+    @keyframes bShine{0%{left:-100%}100%{left:200%}}
+    .btn:active{transform:scale(0.96);}
 
-    .btn-pause {
-        background: linear-gradient(45deg, #ffaa00, #cc8800); /* Orange for pause */
-        color: white;
+    .btn-start  { background:rgba(124,58,237,0.15); color:var(--vl); border:1px solid rgba(124,58,237,0.55); text-shadow:0 0 10px rgba(192,132,252,0.7); }
+    .btn-start:hover  { background:rgba(124,58,237,0.28); }
+    .btn-pause  { background:rgba(251,146,60,0.12); color:var(--fl); border:1px solid rgba(234,88,12,0.5);  text-shadow:0 0 10px rgba(251,146,60,0.7); }
+    .btn-pause:hover  { background:rgba(234,88,12,0.25); }
+    .btn-reset  { background:rgba(234,88,12,0.1);  color:var(--fl); border:1px solid rgba(234,88,12,0.4);  text-shadow:0 0 10px rgba(251,146,60,0.6); }
+    .btn-reset:hover  { background:rgba(234,88,12,0.22); }
+    .btn-hist   { grid-column:1/-1; clip-path:none; background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.28); border:1px solid rgba(255,255,255,0.07); letter-spacing:4px; }
+    .btn-hist:hover   { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.6); }
+
+    /* ── HISTORY ── */
+    .history-panel {
+      flex:1; overflow-y:auto;
+      margin:0 16px 8px;
+      border:1px solid rgba(124,58,237,0.18);
+      background:rgba(0,0,0,0.25);
+      display:none;
     }
+    .history-panel.on { display:block; }
+    .history-panel::-webkit-scrollbar { width:3px; }
+    .history-panel::-webkit-scrollbar-thumb { background:rgba(124,58,237,0.4); border-radius:2px; }
 
-    .btn-primary {
-        background: linear-gradient(45deg, #ff4444, #cc3333); /* Red for reset */
-        color: white;
-    }
-
-    .btn-secondary {
-        background: linear-gradient(45deg, #4488ff, #3366cc); /* Blue for history */
-        color: white;
-    }
-
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-    }
-
-    .btn:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    }
-
-    /* History Section Styles */
-    .history {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 15px;
-        padding: 20px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
+    .history-inner { padding:12px 14px; }
     .history-title {
-        font-size: 18px;
-        font-weight: bold;
-        margin-bottom: 15px;
-        color: #fff;
+      font-size:8px; letter-spacing:4px;
+      background:linear-gradient(90deg,var(--vl),var(--fl));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      margin-bottom:10px; display:flex; align-items:center; gap:8px;
     }
-
-    .history-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .history-item:last-child {
-        border-bottom: none;
-    }
-
-    .history-date {
-        font-size: 12px;
-        color: #aaa;
-    }
-
-    .history-distance {
-        font-family: 'Orbitron', monospace;
-        font-weight: bold;
-        color: #00ff88;
-        background: #000;
-        padding: 3px 6px;
-        border-radius: 3px;
-        border: 1px solid #333;
-        letter-spacing: 1px;
-        text-shadow: 0 0 8px #00ff88;
-        display: inline-block;
-    }
-
-    .loading {
-        text-align: center;
-        color: #88ddff;
-        font-style: italic;
-    }
-
-    /* Responsive Adjustments */
-    @media (max-width: 480px) {
-        .container {
-            padding: 15px;
-        }
-        
-        .speedometer {
-            width: 200px;
-            height: 200px;
-        }
-        
-        .speed-value {
-            font-size: 36px;
-        }
-
-        .btn {
-            min-width: unset; /* Permitir que los botones se adapten mejor */
-        }
-    }
+    .history-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,rgba(124,58,237,0.3),rgba(234,88,12,0.3)); }
+    .history-item { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+    .history-item:last-child { border-bottom:none; }
+    .hist-km { font-family:'Orbitron',sans-serif; font-size:14px; background:linear-gradient(135deg,var(--vl),var(--fl)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .hist-meta { font-size:8px; color:rgba(255,255,255,0.18); margin-top:2px; }
+    .hist-max { font-family:'Orbitron',sans-serif; font-size:12px; color:var(--vl); text-align:right; }
+    .hist-max-lbl { font-size:7px; letter-spacing:2px; color:rgba(255,255,255,0.15); text-align:right; margin-top:2px; }
+    .no-history { text-align:center; color:rgba(255,255,255,0.18); font-size:9px; letter-spacing:3px; padding:20px 0; }
   </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="status" id="status">Iniciando GPS...</div>
-        </div>
+  <canvas id="particles"></canvas>
+  <div class="scan"></div>
+  <div class="flames">
+    <div class="flame"></div><div class="flame"></div><div class="flame"></div>
+    <div class="flame"></div><div class="flame"></div><div class="flame"></div>
+    <div class="flame"></div><div class="flame"></div><div class="flame"></div>
+  </div>
+  <div class="corner-tr"></div>
+  <div class="corner-bl"></div>
 
-        <div class="speedometer">
-            <div class="speed-display">
-                <div class="speed-value" id="speed">0</div>
-                <div class="speed-unit">km/h</div>
-            </div>
-        </div>
+  <div class="app">
 
-        <div class="trip-section">
-            <div class="trip-header">
-                <div class="trip-title">Viaje Actual</div>
-            </div>
-            <div class="trip-value" id="tripDistance">0.00 km</div>
-            <div class="trip-details">
-                <div class="detail-item">
-                    <span class="detail-value time" id="tripTime">00:00</span>
-                    <div class="detail-label">Tiempo</div>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-value" id="maxSpeed">0</span>
-                    <div class="detail-label">Velocidad Máxima</div>
-                </div>
-            </div>
+    <!-- HEADER -->
+    <div class="header">
+      <div class="logo">MOTOSPEED</div>
+      <div class="header-right">
+        <div class="status" id="statusEl">
+          <div class="status-dot"></div>
+          <span id="statusText">INIT GPS</span>
         </div>
-
-        <div class="controls">
-            <button class="btn btn-start" id="startStop">Iniciar</button>
-            <button class="btn btn-primary" id="resetTrip">Reiniciar Viaje</button>
-            <button class="btn btn-secondary" id="toggleHistory">Historial</button>
-        </div>
-
-        <div class="history" id="historySection" style="display: none;">
-            <div class="history-title">Historial de Viajes</div>
-            <div id="historyList">
-                <div class="loading">Cargando historial...</div>
-            </div>
-        </div>
+        <div class="rec-badge" id="recBadge">● REC</div>
+      </div>
     </div>
 
-    <script>
-        class MotoSpeedometer {
-            constructor() {
-                this.watchId = null;
-                this.lastPosition = null;
-                this.currentSpeed = 0; // Velocidad actual
+    <!-- SPEED + GEAR -->
+    <div class="speed-section">
+      <div class="speed-left">
+        <div class="streaks">
+          <div class="streak"></div><div class="streak"></div>
+          <div class="streak"></div><div class="streak"></div><div class="streak"></div>
+        </div>
+        <div class="speed-num" id="speedNum" data-v="0">0</div>
+        <div class="speed-unit">KM / H</div>
+      </div>
+      <div class="gear-wrap">
+        <div class="gear-badge" id="gearBadge">
+          <div class="gear-num" id="gearNum">—</div>
+          <div class="gear-lbl">GEAR</div>
+        </div>
+        <div class="gear-name" id="gearName">—</div>
+      </div>
+    </div>
 
-                // --- Carga de datos de localStorage para el viaje actual ---
-                this.tripDistance = parseFloat(localStorage.getItem("tripDistance")) || 0;
-                this.maxSpeed = parseFloat(localStorage.getItem("maxSpeed")) || 0;
-                this.currentTripDuration = parseInt(localStorage.getItem("currentTripDuration")) || 0; // Duración del viaje actual en ms
+    <!-- SHIFT ALERT -->
+    <div class="shift-alert" id="shiftAlert">⚠ SHIFT DOWN</div>
 
-                // Estado de grabación y tiempo de inicio/pausa
-                this.isRecording = localStorage.getItem("isRecording") === 'true'; // Carga el estado de grabación
-                this.tripStartTime = Date.now() - this.currentTripDuration; // Ajusta el tiempo de inicio al cargar
-                this.pausedTime = this.currentTripDuration; // Si estaba pausado, este es el tiempo acumulado
+    <!-- DATA PANEL -->
+    <div class="data-panel">
+      <div class="panel-title">CURRENT TRIP</div>
+      <div class="trip-distance" id="tripDistance">0.00 km</div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">TIME</div>
+          <span class="metric-val time" id="tripTime">00:00</span>
+        </div>
+        <div class="metric">
+          <div class="metric-label">MAX SPEED</div>
+          <span class="metric-val mspd" id="maxSpeed">0</span>
+        </div>
+      </div>
+    </div>
 
-                // Historial de viajes guardados
-                this.history = this.loadHistory(); // Carga el historial completo
+    <!-- PROGRESS BAR -->
+    <div class="prog-wrap">
+      <div class="prog-meta">
+        <span>0</span><span id="progLabel">0 km/h</span><span>200</span>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    </div>
 
-                // Estado de seguimiento GPS
-                this.isTracking = false;
+    <!-- CONTROLS -->
+    <div class="controls">
+      <button class="btn btn-start" id="startStop">START</button>
+      <button class="btn btn-reset" id="resetTrip">RESET</button>
+      <button class="btn btn-hist" id="toggleHistory">▼ TRIP HISTORY</button>
+    </div>
 
-                console.log(`[Carga Inicial] Distancia: ${this.tripDistance.toFixed(2)} km, Máx: ${Math.round(this.maxSpeed)} km/h, Tiempo: ${this.formatTime(this.currentTripDuration)}`);
-                console.log(`[Carga Inicial] Grabando: ${this.isRecording}`);
+    <!-- HISTORY -->
+    <div class="history-panel" id="historySection">
+      <div class="history-inner">
+        <div class="history-title">Trip History</div>
+        <div id="historyList"><div class="no-history">NO TRIPS RECORDED</div></div>
+      </div>
+    </div>
 
-                this.init();
-            }
+  </div>
 
-            init() {
-                this.setupEventListeners();
-                this.startGPS();
-                this.startTimer(); // Inicia el temporizador de la interfaz
-                this.updateDisplay(); // Actualiza la interfaz con los valores cargados
+  <script>
+    // ── Particles ──
+    const cvs = document.getElementById('particles');
+    const pctx = cvs.getContext('2d');
+    function resizeCvs(){ cvs.width=window.innerWidth; cvs.height=window.innerHeight; }
+    resizeCvs();
+    window.addEventListener('resize', resizeCvs);
 
-                // Actualiza el botón Iniciar/Pausar según el estado cargado
-                const startStopButton = document.getElementById('startStop');
-                startStopButton.textContent = this.isRecording ? "Pausar" : "Iniciar";
-                startStopButton.className = this.isRecording ? 'btn btn-pause' : 'btn btn-start';
+    const PCOLS=['rgba(168,85,247,','rgba(192,132,252,','rgba(249,115,22,','rgba(251,146,60,','rgba(251,191,36,'];
+    const pts=Array.from({length:40},()=>({
+      x:Math.random()*window.innerWidth, y:Math.random()*window.innerHeight,
+      r:Math.random()*1.6+0.4, vx:(Math.random()-0.5)*0.3, vy:-Math.random()*0.45-0.1,
+      c:PCOLS[Math.floor(Math.random()*PCOLS.length)],
+      a:Math.random()*0.6+0.2, life:Math.random(), spd:Math.random()*0.004+0.002
+    }));
+    function drawPts(){
+      pctx.clearRect(0,0,cvs.width,cvs.height);
+      pts.forEach(p=>{
+        p.life+=p.spd;
+        if(p.life>1){p.life=0;p.x=Math.random()*cvs.width;p.y=cvs.height;}
+        const a=p.a*Math.sin(p.life*Math.PI);
+        pctx.beginPath();pctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        pctx.fillStyle=p.c+a+')';pctx.fill();
+        pctx.beginPath();pctx.arc(p.x,p.y,p.r*3.5,0,Math.PI*2);
+        pctx.fillStyle=p.c+(a*0.1)+')';pctx.fill();
+        p.x+=p.vx;p.y+=p.vy;
+      });
+      requestAnimationFrame(drawPts);
+    }
+    drawPts();
 
-                // Guardado automático del estado del viaje actual cada 30 segundos
-                setInterval(() => this.saveCurrentTripState(), 30000);
-                console.log("[Init] Speedometer inicializado.");
-                this.updateStatus(this.isTracking ? (this.isRecording ? 'GPS - Grabando' : 'GPS - Pausado') : 'Iniciando GPS...');
-            }
+    // ── Gear logic ──
+    const GEARS=[
+      {num:'1',name:'1ST',max:15},
+      {num:'2',name:'2ND',max:25},
+      {num:'3',name:'3RD',max:35},
+      {num:'4',name:'4TH',max:45},
+      {num:'5',name:'5TH',max:999},
+    ];
+    const WARN=3; // km/h below lower boundary to warn
 
-            setupEventListeners() {
-                document.getElementById('startStop').addEventListener('click', () => this.toggleRecording());
-                document.getElementById('resetTrip').addEventListener('click', () => this.resetTrip());
-                document.getElementById('toggleHistory').addEventListener('click', () => this.toggleHistory());
+    function getGearIdx(spd){
+      if(spd<=0) return null;
+      for(let i=0;i<GEARS.length;i++) if(spd<=GEARS[i].max) return i;
+      return GEARS.length-1;
+    }
+    function isWarn(spd,idx){
+      if(idx<=0) return false;
+      return spd<=(GEARS[idx-1].max+WARN) && spd>GEARS[idx-1].max;
+    }
 
-                // Evitar que la pantalla se apague (Wake Lock API - experimental en algunos navegadores)
-                if ('wakeLock' in navigator) {
-                    let wakeLock = null;
-                    const requestWakeLock = async () => {
-                        try {
-                            wakeLock = await navigator.wakeLock.request('screen');
-                            console.log('Wake Lock activo.');
-                        } catch (err) {
-                            console.error('Fallo al solicitar Wake Lock:', err);
-                        }
-                    };
-                    const releaseWakeLock = () => {
-                        if (wakeLock) {
-                            wakeLock.release();
-                            wakeLock = null;
-                            console.log('Wake Lock liberado.');
-                        }
-                    };
+    // ── Main App ──
+    class MotoSpeedometer {
+      constructor(){
+        this.watchId=null; this.lastPosition=null;
+        this.currentSpeed=0; this.prevGearIdx=null;
 
-                    // Solicitar el wake lock cuando la grabación se inicia
-                    // y liberarlo cuando se detiene o se pausa si es necesario, o al cerrar la página
-                    // Para simplicidad, se solicita al inicio y se libera en beforeunload.
-                    // Podrías atar request/release a isRecording para mayor control.
-                    window.addEventListener('visibilitychange', () => {
-                        if (document.visibilityState === 'visible' && this.isRecording) {
-                            requestWakeLock();
-                        } else if (wakeLock) {
-                            releaseWakeLock();
-                        }
-                    });
-                    if (this.isRecording) { // Si ya estaba grabando al cargar
-                        requestWakeLock();
-                    }
-                    window.addEventListener('beforeunload', releaseWakeLock);
-                }
-            }
+        this.tripDistance       = parseFloat(localStorage.getItem('tripDistance'))       ||0;
+        this.maxSpeed           = parseFloat(localStorage.getItem('maxSpeed'))           ||0;
+        this.currentTripDuration= parseInt(localStorage.getItem('currentTripDuration'))  ||0;
+        this.isRecording        = localStorage.getItem('isRecording')==='true';
+        this.tripStartTime      = Date.now()-this.currentTripDuration;
+        this.pausedTime         = this.currentTripDuration;
+        this.history            = this.loadHistory();
+        this.isTracking         = false;
+        this.init();
+      }
 
-            startGPS() {
-                if (!navigator.geolocation) {
-                    this.updateStatus('Error: El GPS no está disponible en este navegador.', true);
-                    console.error("GPS no disponible en el navegador.");
-                    return;
-                }
-
-                const options = {
-                    enableHighAccuracy: true,
-                    timeout: 10000, // Intentar obtener la posición por 10 segundos
-                    maximumAge: 1000 // Aceptar una posición de hasta 1 segundo de antigüedad
-                };
-
-                this.watchId = navigator.geolocation.watchPosition(
-                    (position) => this.onPositionUpdate(position),
-                    (error) => this.onPositionError(error),
-                    options
-                );
-                this.isTracking = true;
-                console.log("[GPS] Iniciando seguimiento GPS.");
-                this.updateStatus(this.isRecording ? 'GPS - Grabando' : 'GPS - Pausado', false);
-            }
-
-            onPositionUpdate(position) {
-                if (!this.isTracking) {
-                    this.isTracking = true; // Confirma que el GPS está activo
-                }
-
-                // La velocidad de position.coords.speed viene en metros/segundo. Convertir a km/h
-                // Si position.coords.speed es null o negativo (algunos dispositivos), usar 0
-                this.currentSpeed = (position.coords.speed !== null && position.coords.speed >= 0) ? (position.coords.speed * 3.6) : 0;
-                
-                if (this.currentSpeed > this.maxSpeed) {
-                    this.maxSpeed = this.currentSpeed;
-                }
-
-                if (this.isRecording && this.lastPosition) {
-                    const distance = this.calculateDistance(
-                        this.lastPosition.coords.latitude,
-                        this.lastPosition.coords.longitude,
-                        position.coords.latitude,
-                        position.coords.longitude
-                    );
-
-                    // Solo acumular distancia si hay movimiento significativo para evitar "drift" del GPS
-                    if (this.currentSpeed > 0.5) { // Si la velocidad es mayor a 0.5 km/h
-                        this.tripDistance += distance;
-                    }
-                }
-
-                this.lastPosition = position;
-                this.updateDisplay();
-            }
-
-            onPositionError(error) {
-                let message = 'Error GPS';
-                switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        message = 'Permiso GPS denegado. Habilita el GPS en la configuración del navegador/dispositivo.';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        message = 'GPS no disponible. Asegúrate de tener buena señal.';
-                        break;
-                    case error.TIMEOUT:
-                        message = 'Tiempo de espera GPS agotado. Intenta de nuevo.';
-                        break;
-                    default:
-                        message = `Error GPS desconocido: ${error.message}`;
-                }
-                this.updateStatus(message, true);
-                console.error("Error GPS:", error);
-            }
-
-            calculateDistance(lat1, lon1, lat2, lon2) {
-                const R = 6371; // Radio de la Tierra en kilómetros
-                const dLat = this.toRadians(lat2 - lat1);
-                const dLon = this.toRadians(lon2 - lon1);
-                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                          Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
-                          Math.sin(dLon/2) * Math.sin(dLon/2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                return R * c; // Distancia en kilómetros
-            }
-
-            toRadians(degrees) {
-                return degrees * (Math.PI / 180);
-            }
-
-            updateDisplay() {
-                document.getElementById('speed').textContent = Math.round(this.currentSpeed);
-                document.getElementById('tripDistance').textContent = this.tripDistance.toFixed(2) + ' km';
-                document.getElementById('maxSpeed').textContent = Math.round(this.maxSpeed);
-            }
-
-            startTimer() {
-                // Actualiza el tiempo cada segundo
-                setInterval(() => {
-                    if (this.isRecording) {
-                        this.currentTripDuration = Date.now() - this.tripStartTime;
-                    }
-                    const formattedTime = this.formatTime(this.currentTripDuration);
-                    document.getElementById('tripTime').textContent = formattedTime;
-                }, 1000);
-                console.log("[Timer] Temporizador iniciado.");
-            }
-
-            formatTime(milliseconds) {
-                const totalSeconds = Math.floor(milliseconds / 1000);
-                const minutes = Math.floor(totalSeconds / 60);
-                const seconds = totalSeconds % 60;
-                return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            }
-
-            toggleRecording() {
-                if (!this.isTracking) {
-                    this.updateStatus('Esperando señal GPS para iniciar...', true);
-                    return;
-                }
-
-                this.isRecording = !this.isRecording;
-                const button = document.getElementById('startStop');
-                
-                if (this.isRecording) {
-                    // Si estamos iniciando la grabación, ajusta tripStartTime
-                    this.tripStartTime = Date.now() - this.pausedTime;
-                    button.textContent = 'Pausar';
-                    button.className = 'btn btn-pause';
-                    this.updateStatus('GPS - Grabando', false);
-                    console.log(`[Toggle] Iniciando grabación. tripStartTime ajustado a ${new Date(this.tripStartTime).toLocaleString()}`);
-                } else {
-                    // Si estamos pausando, guarda el tiempo transcurrido
-                    this.pausedTime = Date.now() - this.tripStartTime;
-                    button.textContent = 'Continuar';
-                    button.className = 'btn btn-start';
-                    this.updateStatus('GPS - Pausado', false);
-                    console.log(`[Toggle] Pausando grabación. pausedTime: ${this.pausedTime}`);
-                }
-                this.saveCurrentTripState(); // Guarda el estado de isRecording y tiempo
-                localStorage.setItem("isRecording", this.isRecording); // Guarda el estado de grabación
-            }
-
-            resetTrip() {
-                if (this.tripDistance > 0 || this.currentTripDuration > 0) {
-                    // Guarda el viaje actual en el historial solo si hay distancia o tiempo
-                    const tripData = {
-                        date: new Date().toLocaleDateString('es-ES'),
-                        time: this.formatTime(this.currentTripDuration), // Usa el tiempo formateado
-                        distance: this.tripDistance,
-                        maxSpeed: this.maxSpeed,
-                        durationMs: this.currentTripDuration // Guarda la duración en ms para futuras manipulaciones
-                    };
-                    
-                    this.history.unshift(tripData); // Añade al principio
-                    this.saveHistory();
-                    console.log("[Reset] Viaje actual guardado en el historial.");
-                }
-
-                // Reinicia los datos del viaje actual
-                this.tripDistance = 0;
-                this.maxSpeed = 0;
-                this.currentTripDuration = 0; // Reinicia duración
-                this.pausedTime = 0;
-                this.tripStartTime = Date.now(); // Reinicia el contador de tiempo actual para el próximo inicio
-                this.isRecording = false; // Asegura que esté en estado de "parado"
-
-                // Guarda el estado de reinicio
-                this.saveCurrentTripState();
-                localStorage.setItem("isRecording", false); // Actualiza el estado de grabación a false
-
-                // Actualiza la interfaz y botones
-                this.updateDisplay();
-                document.getElementById('startStop').textContent = 'Iniciar';
-                document.getElementById('startStop').className = 'btn btn-start';
-                document.getElementById('tripTime').textContent = '00:00'; // Asegura que el tiempo se muestre 00:00
-                this.updateHistoryDisplay(); // Actualiza la vista del historial
-                this.updateStatus(this.isTracking ? 'GPS - Pausado' : 'Iniciando GPS...', false);
-                console.log("[Reset] Datos del viaje actual reiniciados y guardados.");
-            }
-
-            saveCurrentTripState() {
-                try {
-                    localStorage.setItem("tripDistance", this.tripDistance.toFixed(2));
-                    localStorage.setItem("maxSpeed", this.maxSpeed.toFixed(2));
-                    localStorage.setItem("currentTripDuration", this.currentTripDuration.toString());
-                    console.log(`[Guardado Automático] Distancia: ${this.tripDistance.toFixed(2)}, Máx: ${Math.round(this.maxSpeed)}, Tiempo: ${this.formatTime(this.currentTripDuration)}`);
-                } catch (e) {
-                    console.error("[Error Guardando] No se pudo guardar el estado actual del viaje en localStorage:", e);
-                    this.updateStatus("Error al guardar datos del viaje. Revise la consola.", true);
-                }
-            }
-
-            loadHistory() {
-                try {
-                    const saved = localStorage.getItem('motoTripHistory');
-                    return saved ? JSON.parse(saved) : [];
-                } catch (e) {
-                    console.error("[Error Carga Historial] No se pudo cargar el historial desde localStorage:", e);
-                    this.updateStatus("Error al cargar historial. Puede que esté corrupto.", true);
-                    return []; // Devuelve un array vacío para evitar que la app falle
-                }
-            }
-
-            saveHistory() {
-                try {
-                    const trimmedHistory = this.history.slice(0, 50); // Mantener solo los últimos 50 viajes
-                    localStorage.setItem('motoTripHistory', JSON.stringify(trimmedHistory));
-                    console.log("[Guardado Historial] Historial de viajes guardado.");
-                } catch (e) {
-                    console.error("[Error Guardando Historial] No se pudo guardar el historial en localStorage:", e);
-                    this.updateStatus("Error al guardar historial. El almacenamiento podría estar lleno.", true);
-                    // Podrías considerar limpiar el historial más agresivamente aquí si el error es por cuota.
-                }
-            }
-
-            toggleHistory() {
-                const historySection = document.getElementById('historySection');
-                const isVisible = historySection.style.display !== 'none';
-                historySection.style.display = isVisible ? 'none' : 'block';
-                document.getElementById('toggleHistory').textContent = isVisible ? 'Historial' : 'Ocultar Historial';
-                
-                if (!isVisible) {
-                    this.updateHistoryDisplay(); // Actualiza el historial al mostrarlo
-                }
-            }
-
-            updateHistoryDisplay() {
-                const historyList = document.getElementById('historyList');
-                
-                if (this.history.length === 0) {
-                    historyList.innerHTML = '<div class="loading">No hay viajes registrados aún.</div>';
-                    return;
-                }
-
-                historyList.innerHTML = this.history.map(trip => {
-                    // Asegúrate de que `trip.time` y `trip.maxSpeed` existan o maneja los casos nulos
-                    const displayTime = trip.durationMs ? this.formatTime(trip.durationMs) : trip.time || 'N/A';
-                    const displayMaxSpeed = Math.round(trip.maxSpeed || 0);
-
-                    return `
-                        <div class="history-item">
-                            <div>
-                                <div class="history-distance">${trip.distance.toFixed(2)} km</div>
-                                <div class="history-date">${trip.date} (${displayTime})</div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="color: #88ddff; font-family: 'Orbitron', monospace; background: #000; padding: 3px 6px; border-radius: 3px; border: 1px solid #333; text-shadow: 0 0 8px #88ddff;">${displayMaxSpeed} km/h</div>
-                                <div class="history-date">Máx</div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            updateStatus(message, isError = false) {
-                const statusElement = document.getElementById('status');
-                statusElement.textContent = message;
-                statusElement.className = isError ? 'status error' : 'status';
-            }
+      init(){
+        this.setupListeners();
+        this.startGPS();
+        this.startTimer();
+        this.updateDisplay();
+        const btn=document.getElementById('startStop');
+        if(this.isRecording){
+          btn.textContent='PAUSE'; btn.className='btn btn-pause';
+          document.getElementById('recBadge').classList.add('on');
         }
+        setInterval(()=>this.saveState(),30000);
+      }
 
-        // Inicializar la aplicación cuando la ventana esté completamente cargada
-        window.addEventListener("load", () => {
-            new MotoSpeedometer();
-            console.log("[Window Load] Aplicación cargada y lista.");
-        });
-
-        // Guardar los datos del viaje y el historial cuando el usuario cierra o recarga la página
-        window.addEventListener("beforeunload", () => {
-            const currentInstance = window.speedoInstance; // Referencia a la instancia global
-            if (currentInstance) {
-                currentInstance.saveCurrentTripState(); // Guarda el estado actual del viaje
-                currentInstance.saveHistory(); // Guarda el historial completo
-                localStorage.setItem("isRecording", currentInstance.isRecording); // Guarda el último estado de grabación
-                console.log("[BeforeUnload] Datos guardados antes de cerrar/recargar.");
-            }
-        });
-
-        // --- Service Worker (PWA) ---
-        // Asegúrate de que service-worker.js esté en la raíz de tu proyecto
-        // y de que tu sitio se sirva vía HTTPS para que el Service Worker funcione.
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("service-worker.js")
-                .then(reg => console.log('Service Worker registrado con éxito. Scope:', reg.scope))
-                .catch(err => console.error('Fallo el registro del Service Worker:', err));
+      setupListeners(){
+        document.getElementById('startStop').addEventListener('click',()=>this.toggleRecording());
+        document.getElementById('resetTrip').addEventListener('click',()=>this.resetTrip());
+        document.getElementById('toggleHistory').addEventListener('click',()=>this.toggleHistory());
+        if('wakeLock' in navigator){
+          let wl=null;
+          const req=async()=>{try{wl=await navigator.wakeLock.request('screen');}catch(e){}};
+          const rel=()=>{if(wl){wl.release();wl=null;}};
+          window.addEventListener('visibilitychange',()=>{
+            if(document.visibilityState==='visible'&&this.isRecording) req(); else rel();
+          });
+          if(this.isRecording) req();
+          window.addEventListener('beforeunload',rel);
         }
-    </script>
+      }
+
+      startGPS(){
+        if(!navigator.geolocation){this.updateStatus('GPS NOT AVAILABLE',true);return;}
+        this.watchId=navigator.geolocation.watchPosition(
+          p=>this.onPosition(p), e=>this.onGPSError(e),
+          {enableHighAccuracy:true,timeout:10000,maximumAge:1000}
+        );
+        this.isTracking=true;
+        this.updateStatus(this.isRecording?'RECORDING':'STANDBY');
+      }
+
+      onPosition(pos){
+        this.isTracking=true;
+        const spd=(pos.coords.speed!=null&&pos.coords.speed>=0)?pos.coords.speed*3.6:0;
+        this.currentSpeed=spd;
+        if(spd>this.maxSpeed){
+          this.maxSpeed=spd;
+          const el=document.getElementById('maxSpeed');
+          el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+        }
+        if(this.isRecording&&this.lastPosition){
+          const d=this.calcDist(
+            this.lastPosition.coords.latitude,this.lastPosition.coords.longitude,
+            pos.coords.latitude,pos.coords.longitude
+          );
+          if(spd>0.5) this.tripDistance+=d;
+        }
+        this.lastPosition=pos;
+        this.updateDisplay();
+      }
+
+      onGPSError(e){
+        const m={1:'GPS DENIED',2:'NO SIGNAL',3:'GPS TIMEOUT'};
+        this.updateStatus(m[e.code]||'GPS ERROR',true);
+      }
+
+      calcDist(la1,lo1,la2,lo2){
+        const R=6371,dLa=this.rad(la2-la1),dLo=this.rad(lo2-lo1);
+        const a=Math.sin(dLa/2)**2+Math.cos(this.rad(la1))*Math.cos(this.rad(la2))*Math.sin(dLo/2)**2;
+        return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+      }
+      rad(d){return d*Math.PI/180;}
+
+      updateDisplay(){
+        const spd=Math.round(this.currentSpeed);
+
+        // Speed
+        const nEl=document.getElementById('speedNum');
+        nEl.textContent=spd; nEl.setAttribute('data-v',spd);
+        nEl.classList.toggle('fast',spd>=100);
+
+        // Trip data
+        document.getElementById('tripDistance').textContent=this.tripDistance.toFixed(2)+' km';
+        document.getElementById('maxSpeed').textContent=Math.round(this.maxSpeed);
+
+        // Progress bar
+        const pct=Math.min((this.currentSpeed/200)*100,100);
+        document.getElementById('progFill').style.width=pct+'%';
+        document.getElementById('progLabel').textContent=spd+' km/h';
+
+        // Gear
+        const gIdx=getGearIdx(this.currentSpeed);
+        const badge=document.getElementById('gearBadge');
+        const gNum =document.getElementById('gearNum');
+        const gName=document.getElementById('gearName');
+        const alert=document.getElementById('shiftAlert');
+
+        if(gIdx===null){
+          gNum.textContent='—'; gName.textContent='—';
+          badge.classList.remove('warn','flash');
+          alert.classList.remove('on');
+        } else {
+          const g=GEARS[gIdx];
+          if(gIdx!==this.prevGearIdx){
+            badge.classList.remove('flash');
+            void badge.offsetWidth;
+            badge.classList.add('flash');
+            this.prevGearIdx=gIdx;
+          }
+          gNum.textContent=g.num;
+          gName.textContent=g.name;
+          const warn=isWarn(this.currentSpeed,gIdx);
+          badge.classList.toggle('warn',warn);
+          alert.classList.toggle('on',warn);
+        }
+      }
+
+      startTimer(){
+        setInterval(()=>{
+          if(this.isRecording) this.currentTripDuration=Date.now()-this.tripStartTime;
+          document.getElementById('tripTime').textContent=this.formatTime(this.currentTripDuration);
+        },1000);
+      }
+
+      formatTime(ms){
+        const t=Math.floor(ms/1000),m=Math.floor(t/60),s=t%60;
+        return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      }
+
+      toggleRecording(){
+        if(!this.isTracking){this.updateStatus('WAITING FOR GPS...',true);return;}
+        this.isRecording=!this.isRecording;
+        const btn=document.getElementById('startStop');
+        const badge=document.getElementById('recBadge');
+        if(this.isRecording){
+          this.tripStartTime=Date.now()-this.pausedTime;
+          btn.textContent='PAUSE'; btn.className='btn btn-pause';
+          badge.classList.add('on');
+          this.updateStatus('RECORDING');
+        } else {
+          this.pausedTime=Date.now()-this.tripStartTime;
+          btn.textContent='RESUME'; btn.className='btn btn-start';
+          badge.classList.remove('on');
+          this.updateStatus('PAUSED');
+        }
+        this.saveState();
+        localStorage.setItem('isRecording',this.isRecording);
+      }
+
+      resetTrip(){
+        if(this.tripDistance>0||this.currentTripDuration>0){
+          this.history.unshift({
+            date:new Date().toLocaleDateString('en-US'),
+            time:this.formatTime(this.currentTripDuration),
+            distance:this.tripDistance,
+            maxSpeed:this.maxSpeed,
+            durationMs:this.currentTripDuration
+          });
+          this.saveHistory();
+        }
+        this.tripDistance=0; this.maxSpeed=0;
+        this.currentTripDuration=0; this.pausedTime=0;
+        this.tripStartTime=Date.now(); this.isRecording=false;
+        this.prevGearIdx=null;
+        this.saveState();
+        localStorage.setItem('isRecording',false);
+        this.updateDisplay();
+        document.getElementById('startStop').textContent='START';
+        document.getElementById('startStop').className='btn btn-start';
+        document.getElementById('recBadge').classList.remove('on');
+        document.getElementById('tripTime').textContent='00:00';
+        document.getElementById('progFill').style.width='0%';
+        this.updateHistoryDisplay();
+        this.updateStatus(this.isTracking?'STANDBY':'INIT GPS');
+      }
+
+      saveState(){
+        try{
+          localStorage.setItem('tripDistance',this.tripDistance.toFixed(2));
+          localStorage.setItem('maxSpeed',this.maxSpeed.toFixed(2));
+          localStorage.setItem('currentTripDuration',this.currentTripDuration.toString());
+        }catch(e){}
+      }
+
+      loadHistory(){
+        try{return JSON.parse(localStorage.getItem('motoTripHistory')||'[]');}catch(e){return[];}
+      }
+      saveHistory(){
+        try{localStorage.setItem('motoTripHistory',JSON.stringify(this.history.slice(0,50)));}catch(e){}
+      }
+
+      toggleHistory(){
+        const sec=document.getElementById('historySection');
+        const btn=document.getElementById('toggleHistory');
+        const vis=sec.classList.toggle('on');
+        btn.textContent=vis?'▲ HIDE HISTORY':'▼ TRIP HISTORY';
+        if(vis) this.updateHistoryDisplay();
+      }
+
+      updateHistoryDisplay(){
+        const list=document.getElementById('historyList');
+        if(!this.history.length){
+          list.innerHTML='<div class="no-history">NO TRIPS RECORDED</div>';return;
+        }
+        list.innerHTML=this.history.map(t=>{
+          const time=t.durationMs?this.formatTime(t.durationMs):t.time||'N/A';
+          const max=Math.round(t.maxSpeed||0);
+          return `<div class="history-item">
+            <div><div class="hist-km">${t.distance.toFixed(2)} km</div><div class="hist-meta">${t.date} · ${time}</div></div>
+            <div><div class="hist-max">${max} km/h</div><div class="hist-max-lbl">MAX</div></div>
+          </div>`;
+        }).join('');
+      }
+
+      updateStatus(msg,isError=false){
+        const el=document.getElementById('statusEl');
+        document.getElementById('statusText').textContent=msg;
+        el.className='status'+(isError?' error':(this.isTracking?' active':''));
+      }
+    }
+
+    window.addEventListener('load',()=>{ window.speedoInstance=new MotoSpeedometer(); });
+    window.addEventListener('beforeunload',()=>{
+      const i=window.speedoInstance;
+      if(i){i.saveState();i.saveHistory();localStorage.setItem('isRecording',i.isRecording);}
+    });
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('service-worker.js')
+        .then(r=>console.log('SW:',r.scope)).catch(e=>console.error('SW err:',e));
+    }
+  </script>
 </body>
 </html>
-
