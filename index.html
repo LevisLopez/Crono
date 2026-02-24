@@ -527,6 +527,51 @@
       }
     }
 
+    // ══════════════════════════════════════
+    // VOICE SYSTEM — Web Speech API
+    // Audio ducking + English only
+    // ══════════════════════════════════════
+    const Voice = {
+      synth: window.speechSynthesis,
+      speaking: false,
+      queue: [],
+
+      // Formato hora en inglés: "3:45 PM"
+      getTimeStr(){
+        const now = new Date();
+        let h = now.getHours();
+        const m = now.getMinutes();
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        const ms = m === 0 ? "o'clock" : (m < 10 ? 'oh ' + m : String(m));
+        return `${h} ${ms} ${ampm}`;
+      },
+
+      speak(text, priority=false){
+        if(!this.synth) return;
+        // Si es prioritario (alertas 80/100) cancela lo anterior
+        if(priority) { this.synth.cancel(); this.queue=[]; }
+        // No acumular más de 2 mensajes en cola
+        if(this.queue.length >= 2) return;
+        this.queue.push(text);
+        if(!this.speaking) this._next();
+      },
+
+      _next(){
+        if(!this.queue.length){ this.speaking=false; return; }
+        this.speaking = true;
+        const text = this.queue.shift();
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.lang    = 'en-US';
+        utt.rate    = 0.92;   // un poco más lento, más claro
+        utt.pitch   = 1.0;
+        utt.volume  = 1.0;
+        utt.onend   = ()=>{ setTimeout(()=>this._next(), 300); };
+        utt.onerror = ()=>{ this.speaking=false; this._next(); };
+        this.synth.speak(utt);
+      }
+    };
+
     // ── Main App ──
     class MotoSpeedometer{
       constructor(){
@@ -534,6 +579,12 @@
         this.currentSpeed=0;this.prevGearIdx=null;
         this.prevSpeed=0;this.prevSpeedTime=null;
         this.accel=0;this.accelSmooth=0; // smoothed accel
+
+        // Voice alert tracking
+        this.lastSpeedZone  = 0;   // último umbral cruzado (40/50/60/80/100)
+        this.lastAlertSpeed = 0;   // velocidad en el último aviso
+        this.last50km       = 0;   // último múltiplo de 50km anunciado
+        this.voiceReady     = false;
 
         this.tripDistance      =parseFloat(localStorage.getItem('tripDistance'))      ||0;
         this.maxSpeed          =parseFloat(localStorage.getItem('maxSpeed'))          ||0;
@@ -551,6 +602,15 @@
         this.startGPS();
         this.startTimer();
         this.updateDisplay();
+        // Init voice on first user interaction (required by browsers)
+        document.addEventListener('click', ()=>{
+          if(!this.voiceReady){
+            this.voiceReady=true;
+            // Warm up the speech engine silently
+            const u=new SpeechSynthesisUtterance('');
+            u.volume=0;window.speechSynthesis.speak(u);
+          }
+        }, {once:true});
         const btn=document.getElementById('startStop');
         if(this.isRecording){btn.textContent='PAUSE';btn.className='btn btn-pause';document.getElementById('recBadge').classList.add('on');}
         setInterval(()=>this.saveState(),30000);
@@ -619,7 +679,46 @@
           if(spd>0.5)this.tripDistance+=d;
         }
         this.lastPosition=pos;
+        // ── Voice speed alerts ──
+        if(this.isRecording && this.voiceReady) this.checkVoiceAlerts(spd);
         this.updateDisplay();
+      }
+
+      checkVoiceAlerts(spd){
+        const t = Voice.getTimeStr();
+        const prev = this.lastAlertSpeed;
+        const cur  = Math.round(spd);
+
+        // Umbrales con hora (subiendo O bajando)
+        const zones = [40, 50, 60];
+        for(const z of zones){
+          const crossed = (prev < z && cur >= z) || (prev >= z && cur < z && cur > 0);
+          if(crossed && this.lastSpeedZone !== z + (cur>=z?0.1:-0.1)){
+            this.lastSpeedZone = z + (cur>=z?0.1:-0.1);
+            Voice.speak(`${z} kilometers per hour. Time is ${t}`);
+            this.lastAlertSpeed = cur;
+            return; // solo un aviso a la vez
+          }
+        }
+
+        // Alertas de seguridad solo subiendo (sin hora)
+        if(prev < 80 && cur >= 80){
+          Voice.speak('Warning. 80 kilometers per hour. Please reduce speed.', true);
+          this.lastAlertSpeed = cur; return;
+        }
+        if(prev < 100 && cur >= 100){
+          Voice.speak('Danger. Over 100 kilometers per hour. Slow down now.', true);
+          this.lastAlertSpeed = cur; return;
+        }
+
+        // Cada 50 km
+        const km50 = Math.floor(this.tripDistance / 50) * 50;
+        if(km50 > 0 && km50 !== this.last50km && this.tripDistance >= km50){
+          this.last50km = km50;
+          Voice.speak(`${km50} kilometers completed. Consider taking a short break.`);
+        }
+
+        this.lastAlertSpeed = cur;
       }
 
       onGPSError(e){
@@ -714,10 +813,15 @@
           this.tripStartTime=Date.now()-this.pausedTime;
           btn.textContent='PAUSE';btn.className='btn btn-pause';
           badge.classList.add('on');this.updateStatus('RECORDING');
+          // Voice: START
+          this.voiceReady=true;
+          Voice.speak(`LeviSpeed started. Time is ${Voice.getTimeStr()}`);
         }else{
           this.pausedTime=Date.now()-this.tripStartTime;
           btn.textContent='RESUME';btn.className='btn btn-start';
           badge.classList.remove('on');this.updateStatus('PAUSED');
+          // Voice: PAUSE
+          Voice.speak(`Ride paused. Time is ${Voice.getTimeStr()}`);
         }
         this.saveState();localStorage.setItem('isRecording',this.isRecording);
       }
