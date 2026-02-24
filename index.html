@@ -13,8 +13,7 @@
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
     :root{
       --v:#7c3aed;--vl:#c084fc;
-      --f:#ea580c;--fl:#fb923c;--gold:#fbbf24;
-      --g:#4ade80;
+      --f:#ea580c;--fl:#fb923c;--gold:#fbbf24;--g:#4ade80;
     }
     html,body{width:100%;height:100%;overflow:hidden;}
     body{
@@ -37,12 +36,10 @@
         radial-gradient(ellipse at 85% 90%,rgba(234,88,12,0.15) 0%,transparent 45%);
       pointer-events:none;z-index:0;
     }
-    .scan{
-      position:fixed;left:0;right:0;height:3px;z-index:50;pointer-events:none;
+    .scan{position:fixed;left:0;right:0;height:3px;z-index:50;pointer-events:none;
       background:linear-gradient(90deg,transparent,var(--vl),var(--fl),transparent);
       box-shadow:0 0 14px rgba(192,132,252,0.9),0 0 14px rgba(251,146,60,0.6);
-      animation:scanDown 5s linear infinite;
-    }
+      animation:scanDown 5s linear infinite;}
     @keyframes scanDown{0%{top:-3px;opacity:0;}4%{opacity:1;}96%{opacity:1;}100%{top:100%;opacity:0;}}
     #particles{position:fixed;inset:0;z-index:1;pointer-events:none;}
     .c-tr{position:fixed;top:0;right:0;width:44px;height:44px;z-index:15;pointer-events:none;
@@ -51,7 +48,7 @@
       background:linear-gradient(45deg,var(--f) 45%,transparent 45%);}
     .flames{position:fixed;bottom:0;left:0;right:0;height:60px;pointer-events:none;z-index:2;overflow:hidden;}
     .flame{position:absolute;bottom:0;border-radius:50% 50% 20% 20%;animation:flameUp linear infinite;}
-    .flame:nth-child(1){left:3%; width:3px;background:rgba(168,85,247,0.6);animation-duration:2.0s;animation-delay:0.0s;}
+    .flame:nth-child(1){left:3%;width:3px;background:rgba(168,85,247,0.6);animation-duration:2.0s;animation-delay:0.0s;}
     .flame:nth-child(2){left:13%;width:5px;background:rgba(249,115,22,0.7);animation-duration:1.7s;animation-delay:0.4s;}
     .flame:nth-child(3){left:23%;width:3px;background:rgba(251,191,36,0.5);animation-duration:2.3s;animation-delay:0.8s;}
     .flame:nth-child(4){left:35%;width:6px;background:rgba(168,85,247,0.5);animation-duration:1.5s;animation-delay:0.2s;}
@@ -67,129 +64,95 @@
 
     /* ── HEADER ── */
     .hdr{
-      flex-shrink:0;padding:8px 14px 6px;
+      flex:0 0 auto;padding:7px 14px 5px;
       display:flex;justify-content:space-between;align-items:center;
       border-bottom:1px solid rgba(124,58,237,0.35);
       background:linear-gradient(90deg,rgba(124,58,237,0.1),rgba(234,88,12,0.07));
     }
-    .logo{
-      font-family:'Orbitron',sans-serif;font-size:clamp(14px,4vw,20px);font-weight:900;letter-spacing:3px;
+    .logo{font-family:'Orbitron',sans-serif;font-size:clamp(13px,3.5vw,18px);font-weight:900;letter-spacing:3px;
       background:linear-gradient(135deg,var(--vl),var(--fl));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    }
-    .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
-    .status{font-size:clamp(8px,2.2vw,11px);letter-spacing:3px;display:flex;align-items:center;gap:5px;color:rgba(255,255,255,0.3);}
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+    .status{font-size:clamp(8px,2vw,10px);letter-spacing:3px;display:flex;align-items:center;gap:5px;color:rgba(255,255,255,0.3);}
     .sdot{width:7px;height:7px;border-radius:50%;background:#333;transition:all 0.3s;}
     .status.active{color:var(--g);}
     .status.active .sdot{background:var(--g);box-shadow:0 0 10px var(--g);animation:sdAnim 2s infinite;}
     .status.error{color:#ef4444;}
     .status.error .sdot{background:#ef4444;box-shadow:0 0 10px #ef4444;}
-    @keyframes sdAnim{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.6);opacity:0.4;}}
-    .rec-badge{
-      font-size:clamp(8px,2vw,10px);letter-spacing:2px;padding:2px 8px;
+    @keyframes sdAnim{0%,100%{transform:scale(1);}50%{transform:scale(1.6);opacity:0.4;}}
+    .rec-badge{font-size:clamp(8px,2vw,10px);letter-spacing:2px;padding:2px 7px;
       border:1px solid rgba(251,146,60,0.6);color:var(--fl);
-      box-shadow:0 0 8px rgba(251,146,60,0.3);
-      animation:recAnim 1.6s ease-in-out infinite;display:none;
-    }
+      box-shadow:0 0 8px rgba(251,146,60,0.3);animation:recAnim 1.6s ease-in-out infinite;display:none;}
     .rec-badge.on{display:block;}
     @keyframes recAnim{0%,100%{opacity:1;}50%{opacity:0.3;box-shadow:0 0 18px rgba(251,146,60,0.9);}}
 
-    /* ── SPEED HERO: grid 2 columnas, número a la izquierda ── */
+    /* ══════════════════════════════════════
+       SPEED HERO — grid 2 cols, llena todo
+    ══════════════════════════════════════ */
     .speed-hero{
       flex:1 1 0;min-height:0;
       display:grid;
-      grid-template-columns:55% 45%;
+      grid-template-columns:52% 48%;
       grid-template-rows:1fr 1fr;
-      border-bottom:1px solid rgba(255,255,255,0.05);
       overflow:hidden;
     }
 
-    /* Columna izquierda: número ocupa 2 filas */
+    /* ── Celda izquierda: velocidad (span 2 rows) ── */
     .spd-cell{
       grid-column:1;grid-row:1/3;
       display:flex;flex-direction:column;
       align-items:center;justify-content:center;
       border-right:1px solid rgba(255,255,255,0.06);
-      padding:6px 4px 6px 10px;
+      padding:0 6px 0 8px;
       position:relative;overflow:hidden;
     }
-    .spd-left{position:relative;display:flex;flex-direction:column;align-items:center;}
-    .streaks{
-      position:absolute;right:calc(100% + 4px);top:0;bottom:0;
-      display:flex;flex-direction:column;justify-content:center;gap:7px;pointer-events:none;
-    }
+    .spd-left{position:relative;display:flex;flex-direction:column;align-items:center;width:100%;}
+    .streaks{position:absolute;right:calc(100% + 2px);top:0;bottom:0;
+      display:flex;flex-direction:column;justify-content:center;gap:6px;pointer-events:none;}
     .streak{height:2px;border-radius:1px;transform-origin:right center;animation:stk 2s ease-in-out infinite;}
-    .streak:nth-child(1){width:44px;background:linear-gradient(90deg,transparent,var(--vl));animation-delay:0.0s;}
-    .streak:nth-child(2){width:26px;background:linear-gradient(90deg,transparent,var(--fl));animation-delay:0.35s;}
-    .streak:nth-child(3){width:56px;background:linear-gradient(90deg,transparent,var(--vl));animation-delay:0.7s;}
-    .streak:nth-child(4){width:18px;background:linear-gradient(90deg,transparent,var(--fl));animation-delay:0.2s;}
-    .streak:nth-child(5){width:36px;background:linear-gradient(90deg,transparent,var(--vl));animation-delay:0.9s;}
+    .streak:nth-child(1){width:38px;background:linear-gradient(90deg,transparent,var(--vl));animation-delay:0.0s;}
+    .streak:nth-child(2){width:22px;background:linear-gradient(90deg,transparent,var(--fl));animation-delay:0.35s;}
+    .streak:nth-child(3){width:48px;background:linear-gradient(90deg,transparent,var(--vl));animation-delay:0.7s;}
+    .streak:nth-child(4){width:16px;background:linear-gradient(90deg,transparent,var(--fl));animation-delay:0.2s;}
+    .streak:nth-child(5){width:30px;background:linear-gradient(90deg,transparent,var(--vl));animation-delay:0.9s;}
     @keyframes stk{0%,100%{transform:scaleX(0.1);opacity:0;}45%,55%{transform:scaleX(1);opacity:1;}}
 
-    /* Número de velocidad — con alertas de color */
+    /* Número velocidad — escala con la celda */
     .spd-num{
       font-family:'Exo 2',sans-serif;
-      font-size:clamp(80px,24vw,36dvh);
-      font-weight:900;line-height:0.85;letter-spacing:-5px;
+      font-size:clamp(88px,26vw,40dvh);
+      font-weight:900;line-height:0.82;letter-spacing:-5px;
       color:#fff;position:relative;
       text-shadow:0 0 30px rgba(192,132,252,1),0 0 70px rgba(124,58,237,0.6),4px 4px 0 rgba(251,146,60,0.2);
       animation:nFuse 3s ease-in-out infinite;
-      transition:color 0.4s, text-shadow 0.4s;
+      transition:text-shadow 0.4s;
     }
-    /* Alerta naranja 60+ km/h */
     .spd-num.warn60{
-      color:#fff;
       text-shadow:0 0 30px rgba(251,146,60,1),0 0 70px rgba(234,88,12,0.8),0 0 120px rgba(234,88,12,0.4);
       animation:nOrange 2s ease-in-out infinite;
     }
-    @keyframes nOrange{
-      0%,100%{text-shadow:0 0 30px rgba(251,146,60,1),0 0 70px rgba(234,88,12,0.8);}
-      50%{text-shadow:0 0 50px rgba(251,191,36,1),0 0 100px rgba(251,146,60,0.9);}
-    }
-    /* Alerta roja 80+ km/h — fondo suave, número siempre blanco */
+    @keyframes nOrange{0%,100%{text-shadow:0 0 30px rgba(251,146,60,1),0 0 70px rgba(234,88,12,0.8);}50%{text-shadow:0 0 50px rgba(251,191,36,1),0 0 100px rgba(251,146,60,0.9);}}
     .spd-num.warn80{
-      color:#fff;
       text-shadow:0 0 40px rgba(239,68,68,1),0 0 80px rgba(220,38,38,0.8),0 0 120px rgba(239,68,68,0.5);
       animation:nRed 0.8s ease-in-out infinite;
     }
-    @keyframes nRed{
-      0%,100%{text-shadow:0 0 40px rgba(239,68,68,1),0 0 80px rgba(220,38,38,0.8);}
-      50%{text-shadow:0 0 60px rgba(239,68,68,1),0 0 120px rgba(220,38,38,1),0 0 180px rgba(239,68,68,0.6);}
-    }
-    /* Fondo rojo suave en la celda */
+    @keyframes nRed{0%,100%{text-shadow:0 0 40px rgba(239,68,68,1),0 0 80px rgba(220,38,38,0.8);}50%{text-shadow:0 0 60px rgba(239,68,68,1),0 0 120px rgba(220,38,38,1),0 0 180px rgba(239,68,68,0.6);}}
     .spd-cell.bg80{background:rgba(220,38,38,0.08);}
-
     .spd-num.fast{animation:nFuse 3s ease-in-out infinite,shake 0.1s linear infinite;}
     .spd-num.warn60.fast{animation:nOrange 2s ease-in-out infinite,shake 0.1s linear infinite;}
     .spd-num.warn80.fast{animation:nRed 0.8s ease-in-out infinite,shake 0.1s linear infinite;}
     @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-3px);}75%{transform:translateX(3px);}}
-    @keyframes nFuse{
-      0%,100%{text-shadow:0 0 30px rgba(192,132,252,1),0 0 70px rgba(124,58,237,0.6),4px 4px 0 rgba(251,146,60,0.2);}
-      50%{text-shadow:0 0 50px rgba(251,146,60,1),0 0 100px rgba(234,88,12,0.7),-4px -4px 0 rgba(192,132,252,0.3);}
-    }
-    .spd-num::before{
-      content:attr(data-v);position:absolute;inset:0;color:var(--vl);opacity:0.15;
-      clip-path:polygon(0 18%,100% 18%,100% 32%,0 32%);animation:glA 5s infinite;
-    }
-    .spd-num::after{
-      content:attr(data-v);position:absolute;inset:0;color:var(--fl);opacity:0.15;
-      clip-path:polygon(0 65%,100% 65%,100% 78%,0 78%);animation:glB 5s infinite;
-    }
-    @keyframes glA{0%,85%,100%{transform:translateX(3px);opacity:0.15;}87%{transform:translateX(-9px);opacity:0.6;}89%{transform:translateX(6px);opacity:0.1;}91%{transform:translateX(0);opacity:0.5;}}
-    @keyframes glB{0%,81%,100%{transform:translateX(-3px);opacity:0.15;}83%{transform:translateX(9px);opacity:0.6;}85%{transform:translateX(-6px);opacity:0.1;}87%{transform:translateX(0);opacity:0.5;}}
-    .spd-unit{
-      font-size:clamp(11px,3vw,14px);letter-spacing:5px;margin-top:4px;
+    @keyframes nFuse{0%,100%{text-shadow:0 0 30px rgba(192,132,252,1),0 0 70px rgba(124,58,237,0.6),4px 4px 0 rgba(251,146,60,0.2);}50%{text-shadow:0 0 50px rgba(251,146,60,1),0 0 100px rgba(234,88,12,0.7),-4px -4px 0 rgba(192,132,252,0.3);}}
+    .spd-num::before{content:attr(data-v);position:absolute;inset:0;color:var(--vl);opacity:0.15;clip-path:polygon(0 18%,100% 18%,100% 32%,0 32%);animation:glA 5s infinite;}
+    .spd-num::after{content:attr(data-v);position:absolute;inset:0;color:var(--fl);opacity:0.15;clip-path:polygon(0 65%,100% 65%,100% 78%,0 78%);animation:glB 5s infinite;}
+    @keyframes glA{0%,85%,100%{transform:translateX(3px);opacity:0.15;}87%{transform:translateX(-9px);opacity:0.6;}89%{transform:translateX(6px);opacity:0.1;}91%{opacity:0.5;}}
+    @keyframes glB{0%,81%,100%{transform:translateX(-3px);opacity:0.15;}83%{transform:translateX(9px);opacity:0.6;}85%{transform:translateX(-6px);opacity:0.1;}87%{opacity:0.5;}}
+    .spd-unit{font-size:clamp(10px,2.8vw,13px);letter-spacing:5px;margin-top:5px;
       background:linear-gradient(90deg,var(--vl),var(--fl));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    }
-
-    /* Banda de alerta de velocidad */
-    .speed-alert-bar{
-      display:none;position:absolute;bottom:0;left:0;right:0;
-      padding:3px 0;text-align:center;
-      font-family:'Orbitron',sans-serif;font-size:clamp(9px,2.5vw,11px);letter-spacing:3px;
-      animation:aPulse 0.7s ease-in-out infinite;
-    }
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .speed-alert-bar{display:none;position:absolute;bottom:0;left:0;right:0;
+      padding:3px 0;text-align:center;font-family:'Orbitron',sans-serif;
+      font-size:clamp(8px,2.2vw,10px);letter-spacing:3px;animation:aPulse 0.7s ease-in-out infinite;}
     .speed-alert-bar.warn60{display:block;background:rgba(234,88,12,0.2);color:var(--fl);border-top:1px solid rgba(251,146,60,0.5);}
     .speed-alert-bar.warn80{display:block;background:rgba(220,38,38,0.25);color:#ef4444;border-top:1px solid rgba(239,68,68,0.6);}
     @keyframes aPulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
@@ -200,31 +163,28 @@
       display:flex;flex-direction:column;
       align-items:center;justify-content:center;
       border-bottom:1px solid rgba(255,255,255,0.05);
-      padding:8px 8px 8px 4px;gap:2px;
+      padding:6px 6px 6px 4px;gap:0;
     }
     .clock-val{
       font-family:'Orbitron',sans-serif;
-      font-size:clamp(22px,7vw,10dvh);font-weight:900;letter-spacing:2px;
-      color:#fff;text-shadow:0 0 20px rgba(192,132,252,0.7),0 0 40px rgba(124,58,237,0.3);
-      animation:clockGlow 4s ease-in-out infinite;line-height:1;
+      font-size:clamp(28px,9vw,12dvh);
+      font-weight:900;letter-spacing:2px;line-height:1;
+      color:#fff;text-shadow:0 0 20px rgba(192,132,252,0.8),0 0 40px rgba(124,58,237,0.4);
+      animation:clockGlow 4s ease-in-out infinite;
     }
-    @keyframes clockGlow{0%,100%{text-shadow:0 0 20px rgba(192,132,252,0.7),0 0 40px rgba(124,58,237,0.3);}50%{text-shadow:0 0 35px rgba(251,146,60,0.8),0 0 60px rgba(234,88,12,0.4);}}
-    .clock-secs{
-      font-family:'Share Tech Mono',monospace;
-      font-size:clamp(11px,3vw,5dvh);letter-spacing:3px;
-      color:rgba(255,255,255,0.3);margin-top:2px;
-    }
-    .clock-label{font-size:clamp(7px,1.8vw,9px);letter-spacing:4px;color:rgba(255,255,255,0.18);margin-top:2px;}
+    @keyframes clockGlow{0%,100%{text-shadow:0 0 20px rgba(192,132,252,0.8),0 0 40px rgba(124,58,237,0.4);}50%{text-shadow:0 0 35px rgba(251,146,60,0.9),0 0 60px rgba(234,88,12,0.5);}}
+    .clock-secs{font-family:'Share Tech Mono',monospace;font-size:clamp(13px,3.5vw,5dvh);letter-spacing:3px;color:rgba(255,255,255,0.3);margin-top:2px;}
+    .clock-label{font-size:clamp(7px,1.8vw,9px);letter-spacing:4px;color:rgba(255,255,255,0.18);margin-top:3px;}
 
     /* ── GEAR + ALTITUD (abajo derecha) ── */
     .gear-cell{
       grid-column:2;grid-row:2;
       display:flex;flex-direction:row;
       align-items:center;justify-content:space-evenly;
-      padding:6px 8px 6px 4px;
+      padding:6px 6px 6px 4px;
     }
     .gear-badge{
-      width:clamp(60px,14vw,78px);height:clamp(60px,14vw,78px);
+      width:clamp(68px,17vw,90px);height:clamp(68px,17vw,90px);
       border-radius:50%;
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       border:2px solid var(--v);
@@ -233,58 +193,77 @@
       transition:all 0.3s;flex-shrink:0;
     }
     .gear-badge.flash{animation:gFlash 0.4s ease-out forwards;}
-    @keyframes gFlash{
-      0%{box-shadow:0 0 60px rgba(192,132,252,1),inset 0 0 40px rgba(192,132,252,0.4);border-color:var(--vl);}
-      100%{box-shadow:0 0 24px rgba(124,58,237,0.5),inset 0 0 24px rgba(124,58,237,0.05);border-color:var(--v);}
-    }
+    @keyframes gFlash{0%{box-shadow:0 0 60px rgba(192,132,252,1),inset 0 0 40px rgba(192,132,252,0.4);border-color:var(--vl);}100%{box-shadow:0 0 24px rgba(124,58,237,0.5);border-color:var(--v);}}
     .gear-badge.warn{border-color:var(--fl);animation:wPulse 0.5s ease-in-out infinite;}
     @keyframes wPulse{0%,100%{box-shadow:0 0 20px rgba(251,146,60,0.5);}50%{box-shadow:0 0 45px rgba(251,146,60,1),0 0 70px rgba(251,146,60,0.35);}}
-    .gear-num{font-family:'Orbitron',sans-serif;font-size:clamp(24px,6vw,8dvh);font-weight:900;line-height:1;color:var(--vl);text-shadow:0 0 18px rgba(192,132,252,0.9);}
+    .gear-num{font-family:'Orbitron',sans-serif;font-size:clamp(28px,7vw,9dvh);font-weight:900;line-height:1;color:var(--vl);text-shadow:0 0 18px rgba(192,132,252,0.9);}
     .gear-lbl{font-size:clamp(7px,1.8vw,9px);letter-spacing:2px;color:rgba(255,255,255,0.25);margin-top:1px;}
-    .gear-info{display:flex;flex-direction:column;align-items:center;gap:4px;}
-    .gear-name{font-size:clamp(10px,2.8vw,4dvh);letter-spacing:2px;color:rgba(192,132,252,0.7);font-family:'Orbitron',sans-serif;font-weight:700;}
-    .alt-val{
-      font-family:'Orbitron',sans-serif;font-size:clamp(12px,3.2vw,4.5dvh);font-weight:700;
-      color:var(--g);text-shadow:0 0 10px rgba(74,222,128,0.6);letter-spacing:1px;
-      animation:mGlow 3s ease-in-out infinite;
-    }
+    .gear-info{display:flex;flex-direction:column;align-items:center;gap:5px;}
+    .gear-name{font-family:'Orbitron',sans-serif;font-size:clamp(13px,3.5vw,5dvh);font-weight:700;letter-spacing:2px;color:rgba(192,132,252,0.8);}
+    .alt-val{font-family:'Orbitron',sans-serif;font-size:clamp(14px,3.8vw,5.5dvh);font-weight:700;color:var(--g);text-shadow:0 0 12px rgba(74,222,128,0.7);letter-spacing:1px;animation:gGlow 3s ease-in-out infinite;}
+    @keyframes gGlow{0%,100%{filter:brightness(1);}50%{filter:brightness(1.6);}}
     .alt-label{font-size:clamp(7px,1.8vw,8px);letter-spacing:3px;color:rgba(255,255,255,0.2);}
 
     /* ── SHIFT ALERT ── */
-    .shift-alert{
-      display:none;margin:0;padding:4px 14px;flex-shrink:0;
-      background:rgba(251,146,60,0.12);
+    .shift-alert{display:none;margin:0;padding:4px 14px;flex-shrink:0;
+      background:rgba(251,146,60,0.12);border-left:4px solid var(--fl);
       border-top:1px solid rgba(251,146,60,0.4);border-bottom:1px solid rgba(251,146,60,0.4);
-      border-left:4px solid var(--fl);
-      font-size:clamp(10px,3vw,13px);letter-spacing:4px;color:var(--fl);text-align:center;
-      animation:aPulse 0.7s ease-in-out infinite;
-    }
+      font-size:clamp(10px,3vw,12px);letter-spacing:4px;color:var(--fl);text-align:center;
+      animation:aPulse 0.7s ease-in-out infinite;}
     .shift-alert.on{display:block;}
 
-    /* ── ACCEL BAR ── */
+    /* ══════════════════════════════════════
+       ACCEL DISPLAY — reemplaza barra loca
+       Muestra 8 bloques que se iluminan
+       según la aceleración/frenado
+    ══════════════════════════════════════ */
     .accel-section{
-      flex-shrink:0;padding:clamp(5px,1.3dvh,10px) 14px;
+      flex-shrink:0;
+      padding:6px 14px 5px;
+      border-top:1px solid rgba(255,255,255,0.04);
       border-bottom:1px solid rgba(255,255,255,0.04);
     }
     .accel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
-    .accel-label{font-size:clamp(9px,2.5vw,11px);letter-spacing:3px;color:rgba(255,255,255,0.25);}
-    .accel-value{font-family:'Orbitron',sans-serif;font-size:clamp(14px,4vw,2.8dvh);font-weight:700;letter-spacing:1px;transition:all 0.2s;}
+    .accel-label{font-size:clamp(8px,2.2vw,10px);letter-spacing:3px;color:rgba(255,255,255,0.25);}
+    .accel-value{font-family:'Orbitron',sans-serif;font-size:clamp(13px,3.5vw,16px);font-weight:700;letter-spacing:1px;transition:all 0.3s;}
     .accel-value.pos{color:var(--g);text-shadow:0 0 12px rgba(74,222,128,0.8);}
     .accel-value.neg{color:var(--fl);text-shadow:0 0 12px rgba(251,146,60,0.8);}
-    .accel-value.zero{color:rgba(255,255,255,0.25);}
-    .accel-track{
-      height:clamp(14px,3.5dvh,22px);background:rgba(255,255,255,0.04);
-      border-radius:10px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.07);
+    .accel-value.zero{color:rgba(255,255,255,0.2);}
+
+    /* Bloques de aceleración */
+    .accel-blocks{
+      display:flex;align-items:center;gap:3px;height:clamp(18px,4dvh,26px);
     }
-    .accel-track::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.2);transform:translateX(-50%);z-index:3;}
-    .accel-brake{position:absolute;right:50%;top:0;bottom:0;width:0%;background:linear-gradient(90deg,rgba(234,88,12,0.2),var(--fl));border-radius:10px 0 0 10px;box-shadow:0 0 16px rgba(251,146,60,0.7);transition:width 0.2s ease-out;}
-    .accel-go{position:absolute;left:50%;top:0;bottom:0;width:0%;background:linear-gradient(90deg,var(--vl),var(--g));border-radius:0 10px 10px 0;box-shadow:0 0 16px rgba(74,222,128,0.7);transition:width 0.2s ease-out;overflow:visible;}
-    .accel-go::after{content:'';position:absolute;right:-6px;top:50%;transform:translateY(-50%);width:clamp(11px,2.5vw,15px);height:clamp(11px,2.5vw,15px);border-radius:50%;background:#fff;box-shadow:0 0 12px var(--g),0 0 25px rgba(74,222,128,0.6);animation:tipGlow 1s ease-in-out infinite;}
-    .accel-brake::before{content:'';position:absolute;left:-6px;top:50%;transform:translateY(-50%);width:clamp(11px,2.5vw,15px);height:clamp(11px,2.5vw,15px);border-radius:50%;background:#fff;box-shadow:0 0 12px var(--fl),0 0 25px rgba(251,146,60,0.6);animation:tipGlow 1s ease-in-out infinite;}
-    @keyframes tipGlow{0%,100%{transform:translateY(-50%) scale(1);}50%{transform:translateY(-50%) scale(1.5);}}
-    .accel-ticks{position:absolute;inset:0;display:flex;pointer-events:none;z-index:2;}
-    .tick{flex:1;border-right:1px solid rgba(255,255,255,0.06);}
-    .tick:last-child{border-right:none;}
+    .accel-divider{
+      width:2px;height:100%;background:rgba(255,255,255,0.25);
+      border-radius:1px;flex-shrink:0;margin:0 2px;
+    }
+    .ablock{
+      flex:1;height:100%;border-radius:3px;
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.08);
+      transition:background 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+    /* Bloques de frenado (izquierda, naranja) */
+    .ablock.brake.active{
+      background:var(--fl);
+      box-shadow:0 0 8px rgba(251,146,60,0.9),0 0 16px rgba(251,146,60,0.4);
+      transform:scaleY(1.1);
+    }
+    .ablock.brake.active.b1{background:rgba(251,146,60,0.5);}
+    .ablock.brake.active.b2{background:rgba(251,146,60,0.7);}
+    .ablock.brake.active.b3{background:rgba(251,146,60,0.9);}
+    .ablock.brake.active.b4{background:var(--fl);box-shadow:0 0 12px rgba(251,146,60,1),0 0 24px rgba(251,146,60,0.5);}
+    /* Bloques de aceleración (derecha, verde→violeta) */
+    .ablock.go.active{
+      background:var(--g);
+      box-shadow:0 0 8px rgba(74,222,128,0.9),0 0 16px rgba(74,222,128,0.4);
+      transform:scaleY(1.1);
+    }
+    .ablock.go.active.g1{background:rgba(74,222,128,0.5);}
+    .ablock.go.active.g2{background:rgba(74,222,128,0.7);}
+    .ablock.go.active.g3{background:rgba(192,132,252,0.8);box-shadow:0 0 10px rgba(192,132,252,0.8);}
+    .ablock.go.active.g4{background:var(--vl);box-shadow:0 0 12px rgba(192,132,252,1),0 0 24px rgba(192,132,252,0.5);}
 
     /* ── DATA ROW ── */
     .data-row{
@@ -295,35 +274,35 @@
       background:linear-gradient(90deg,rgba(124,58,237,0.05),rgba(234,88,12,0.05));
     }
     .data-div{background:rgba(255,255,255,0.06);}
-    .data-cell{padding:clamp(8px,2dvh,16px) 8px;text-align:center;}
-    .data-val{font-family:'Orbitron',sans-serif;font-size:clamp(16px,4.5vw,3.5dvh);font-weight:700;display:block;letter-spacing:1px;animation:dGlow 3s ease-in-out infinite;}
-    .data-val.dist{color:var(--vl);text-shadow:0 0 12px rgba(192,132,252,0.6);font-size:clamp(14px,3.8vw,3dvh);}
+    .data-cell{padding:clamp(8px,2dvh,15px) 8px;text-align:center;}
+    .data-val{font-family:'Orbitron',sans-serif;font-size:clamp(17px,5vw,3.8dvh);font-weight:700;display:block;letter-spacing:1px;animation:dGlow 3s ease-in-out infinite;}
+    .data-val.dist{color:var(--vl);text-shadow:0 0 12px rgba(192,132,252,0.6);font-size:clamp(15px,4.2vw,3.3dvh);}
     .data-val.time{color:#fff;text-shadow:0 0 8px rgba(255,255,255,0.3);animation-delay:.5s;}
     .data-val.mspd{color:var(--fl);text-shadow:0 0 12px rgba(251,146,60,0.6);animation-delay:1s;}
     .data-val.mspd.pop{animation:maxPop 0.5s ease-out;}
     @keyframes maxPop{0%{color:var(--gold);text-shadow:0 0 30px var(--gold),0 0 60px rgba(251,191,36,0.5);transform:scale(1.25);}100%{transform:scale(1);}}
     @keyframes dGlow{0%,100%{filter:brightness(1);}50%{filter:brightness(1.5);}}
-    @keyframes mGlow{0%,100%{filter:brightness(1);}50%{filter:brightness(1.5);}}
     .data-label{font-size:clamp(7px,2vw,9px);letter-spacing:3px;color:rgba(255,255,255,0.2);margin-top:3px;}
 
     /* ── PROGRESS BAR ── */
-    .prog-wrap{flex-shrink:0;padding:clamp(4px,1dvh,8px) 14px;}
+    .prog-wrap{flex-shrink:0;padding:clamp(4px,1dvh,7px) 14px;}
     .prog-meta{display:flex;justify-content:space-between;margin-bottom:4px;}
     .prog-meta span{font-size:clamp(8px,2vw,10px);letter-spacing:1px;color:rgba(255,255,255,0.2);}
     .prog-track{height:clamp(6px,1.5dvh,9px);background:rgba(255,255,255,0.05);border-radius:5px;position:relative;}
-    .prog-fill{height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#5b21b6,var(--v),var(--f),var(--gold));box-shadow:0 0 12px rgba(124,58,237,0.8),0 0 24px rgba(234,88,12,0.35);transition:width 0.7s ease;position:relative;}
-    .prog-fill::after{content:'';position:absolute;right:-6px;top:50%;transform:translateY(-50%);width:clamp(10px,2.5vw,13px);height:clamp(10px,2.5vw,13px);border-radius:50%;background:#fff;box-shadow:0 0 10px var(--vl),0 0 20px var(--f);animation:dPop 1.5s ease-in-out infinite;}
+    .prog-fill{height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#5b21b6,var(--v),var(--f),var(--gold));
+      box-shadow:0 0 12px rgba(124,58,237,0.8),0 0 24px rgba(234,88,12,0.35);transition:width 0.7s ease;position:relative;}
+    .prog-fill::after{content:'';position:absolute;right:-6px;top:50%;transform:translateY(-50%);
+      width:clamp(10px,2.5vw,13px);height:clamp(10px,2.5vw,13px);border-radius:50%;background:#fff;
+      box-shadow:0 0 10px var(--vl),0 0 20px var(--f);animation:dPop 1.5s ease-in-out infinite;}
     @keyframes dPop{0%,100%{transform:translateY(-50%) scale(1);}50%{transform:translateY(-50%) scale(1.6);}}
 
     /* ── BUTTONS ── */
     .controls{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 14px 5px;}
-    .btn{
-      padding:clamp(12px,3dvh,20px) 8px;border:none;
+    .btn{padding:clamp(11px,2.8dvh,18px) 8px;border:none;
       font-family:'Orbitron',sans-serif;font-size:clamp(11px,3vw,14px);font-weight:700;
       letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;
       clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);
-      position:relative;overflow:hidden;
-    }
+      position:relative;overflow:hidden;}
     .btn::after{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.13),transparent);animation:bShine 3s linear infinite;}
     @keyframes bShine{0%{left:-100%}100%{left:200%}}
     .btn:active{transform:scale(0.95);}
@@ -371,10 +350,10 @@
       </div>
     </div>
 
-    <!-- SPEED HERO: grid 2 cols -->
+    <!-- SPEED HERO -->
     <div class="speed-hero">
 
-      <!-- Izquierda: número velocidad -->
+      <!-- Izquierda: velocidad -->
       <div class="spd-cell" id="spdCell">
         <div class="spd-left">
           <div class="streaks">
@@ -384,11 +363,10 @@
           <div class="spd-num" id="speedNum" data-v="0">0</div>
           <div class="spd-unit">KM / H</div>
         </div>
-        <!-- Banda alerta velocidad -->
         <div class="speed-alert-bar" id="speedAlertBar"></div>
       </div>
 
-      <!-- Arriba derecha: hora militar -->
+      <!-- Arriba derecha: hora -->
       <div class="time-cell">
         <div class="clock-val" id="clockVal">00:00</div>
         <div class="clock-secs" id="clockSecs">:00</div>
@@ -413,20 +391,25 @@
     <!-- SHIFT ALERT -->
     <div class="shift-alert" id="shiftAlert">⚠ SHIFT DOWN</div>
 
-    <!-- ACCEL BAR -->
+    <!-- ACCEL BLOCKS -->
     <div class="accel-section">
       <div class="accel-header">
         <span class="accel-label">ACCELERATION</span>
         <span class="accel-value zero" id="accelVal">0.0 km/h·s</span>
       </div>
-      <div class="accel-track">
-        <div class="accel-ticks">
-          <div class="tick"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
-          <div class="tick"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
-          <div class="tick"></div><div class="tick"></div>
-        </div>
-        <div class="accel-brake" id="accelBrake"></div>
-        <div class="accel-go" id="accelGo"></div>
+      <div class="accel-blocks">
+        <!-- 4 bloques frenado (derecha→izquierda = más frenado) -->
+        <div class="ablock brake b4" id="b4"></div>
+        <div class="ablock brake b3" id="b3"></div>
+        <div class="ablock brake b2" id="b2"></div>
+        <div class="ablock brake b1" id="b1"></div>
+        <!-- Divisor central -->
+        <div class="accel-divider"></div>
+        <!-- 4 bloques aceleración (izquierda→derecha = más aceleración) -->
+        <div class="ablock go g1" id="g1"></div>
+        <div class="ablock go g2" id="g2"></div>
+        <div class="ablock go g3" id="g3"></div>
+        <div class="ablock go g4" id="g4"></div>
       </div>
     </div>
 
@@ -503,27 +486,51 @@
     // ── Clock ──
     function updateClock(){
       const now=new Date();
-      const h=String(now.getHours()).padStart(2,'0');
-      const m=String(now.getMinutes()).padStart(2,'0');
-      const s=String(now.getSeconds()).padStart(2,'0');
-      document.getElementById('clockVal').textContent=h+':'+m;
-      document.getElementById('clockSecs').textContent=':'+s;
+      document.getElementById('clockVal').textContent=
+        String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+      document.getElementById('clockSecs').textContent=':'+String(now.getSeconds()).padStart(2,'0');
     }
-    updateClock();
-    setInterval(updateClock,1000);
+    updateClock();setInterval(updateClock,1000);
 
     // ── Gear logic ──
     const GEARS=[{num:'1',name:'1ST',max:15},{num:'2',name:'2ND',max:25},{num:'3',name:'3RD',max:35},{num:'4',name:'4TH',max:45},{num:'5',name:'5TH',max:999}];
-    const WARN=3;
     function getGearIdx(s){if(s<=0)return null;for(let i=0;i<GEARS.length;i++)if(s<=GEARS[i].max)return i;return GEARS.length-1;}
-    function isWarn(s,i){if(i<=0)return false;return s<=(GEARS[i-1].max+WARN)&&s>GEARS[i-1].max;}
+    function isWarn(s,i){if(i<=0)return false;return s<=(GEARS[i-1].max+3)&&s>GEARS[i-1].max;}
+
+    // ── Accel blocks helper ──
+    // Smoothed acceleration to avoid pendulum effect
+    function updateAccelBlocks(accel){
+      const THRESH=0.8; // mínimo para activar bloques
+      const LEVELS=[2,5,10,18]; // km/h·s para cada bloque
+
+      // Apagar todos
+      ['b1','b2','b3','b4','g1','g2','g3','g4'].forEach(id=>{
+        document.getElementById(id).classList.remove('active');
+      });
+
+      if(accel > THRESH){
+        // Acelerando — iluminar bloques go de izquierda a derecha
+        if(accel>=LEVELS[0]) document.getElementById('g1').classList.add('active');
+        if(accel>=LEVELS[1]) document.getElementById('g2').classList.add('active');
+        if(accel>=LEVELS[2]) document.getElementById('g3').classList.add('active');
+        if(accel>=LEVELS[3]) document.getElementById('g4').classList.add('active');
+      } else if(accel < -THRESH){
+        const a=Math.abs(accel);
+        // Frenando — iluminar bloques brake de derecha a izquierda
+        if(a>=LEVELS[0]) document.getElementById('b1').classList.add('active');
+        if(a>=LEVELS[1]) document.getElementById('b2').classList.add('active');
+        if(a>=LEVELS[2]) document.getElementById('b3').classList.add('active');
+        if(a>=LEVELS[3]) document.getElementById('b4').classList.add('active');
+      }
+    }
 
     // ── Main App ──
     class MotoSpeedometer{
       constructor(){
         this.watchId=null;this.lastPosition=null;
         this.currentSpeed=0;this.prevGearIdx=null;
-        this.prevSpeed=0;this.prevSpeedTime=null;this.accel=0;
+        this.prevSpeed=0;this.prevSpeedTime=null;
+        this.accel=0;this.accelSmooth=0; // smoothed accel
 
         this.tripDistance      =parseFloat(localStorage.getItem('tripDistance'))      ||0;
         this.maxSpeed          =parseFloat(localStorage.getItem('maxSpeed'))          ||0;
@@ -556,7 +563,6 @@
           const rel=()=>{if(wl){wl.release();wl=null;}};
           window.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&this.isRecording)req();else rel();});
           if(this.isRecording)req();
-          window.addEventListener('beforeunload',rel);
         }
       }
 
@@ -573,17 +579,24 @@
       onPosition(pos){
         this.isTracking=true;
         const spd=(pos.coords.speed!=null&&pos.coords.speed>=0)?pos.coords.speed*3.6:0;
-
-        // Acceleration
         const now=Date.now();
+
+        // Aceleración suavizada (EMA) para evitar pendulación
         if(this.prevSpeedTime!==null){
           const dt=(now-this.prevSpeedTime)/1000;
-          if(dt>0&&dt<3)this.accel=(spd-this.prevSpeed)/dt;
+          if(dt>0.2&&dt<4){
+            const rawAccel=(spd-this.prevSpeed)/dt;
+            // EMA alpha=0.3: suaviza sin perder respuesta
+            this.accelSmooth=0.3*rawAccel + 0.7*this.accelSmooth;
+          }
         }
+        // Si está quieto, aceleración a 0 gradualmente
+        if(spd<0.5) this.accelSmooth=this.accelSmooth*0.7;
+
         this.prevSpeed=spd;this.prevSpeedTime=now;
         this.currentSpeed=spd;
 
-        // Max speed flash
+        // Max speed
         if(spd>this.maxSpeed){
           this.maxSpeed=spd;
           const el=document.getElementById('maxSpeed');
@@ -621,58 +634,49 @@
       updateDisplay(){
         const spd=Math.round(this.currentSpeed);
 
-        // Speed number + alertas de color
+        // Speed + alertas
         const nEl=document.getElementById('speedNum');
         const cell=document.getElementById('spdCell');
         const alertBar=document.getElementById('speedAlertBar');
         nEl.textContent=spd;nEl.setAttribute('data-v',spd);
-
-        // Quitar clases previas
         nEl.classList.remove('warn60','warn80','fast');
         cell.classList.remove('bg80');
         alertBar.classList.remove('warn60','warn80');
         alertBar.textContent='';
-
         if(spd>=80){
-          nEl.classList.add('warn80');
-          cell.classList.add('bg80');
-          alertBar.classList.add('warn80');
-          alertBar.textContent='⚠ SPEED LIMIT EXCEEDED';
-        } else if(spd>=60){
+          nEl.classList.add('warn80');cell.classList.add('bg80');
+          alertBar.classList.add('warn80');alertBar.textContent='⚠ SPEED LIMIT EXCEEDED';
+        }else if(spd>=60){
           nEl.classList.add('warn60');
-          alertBar.classList.add('warn60');
-          alertBar.textContent='⚠ SPEED LIMIT';
+          alertBar.classList.add('warn60');alertBar.textContent='⚠ SPEED LIMIT';
         }
-        if(spd>=100) nEl.classList.add('fast');
+        if(spd>=100)nEl.classList.add('fast');
 
-        // Distance, max
+        // Data
         document.getElementById('tripDistance').textContent=this.tripDistance.toFixed(2)+' km';
         document.getElementById('maxSpeed').textContent=Math.round(this.maxSpeed);
 
-        // Progress bar
-        const pct=Math.min((this.currentSpeed/200)*100,100);
-        document.getElementById('progFill').style.width=pct+'%';
+        // Progress
+        document.getElementById('progFill').style.width=Math.min((this.currentSpeed/200)*100,100)+'%';
         document.getElementById('progLabel').textContent=spd+' km/h';
 
-        // Accel bar
-        const MAX_A=20;
-        const cl=Math.max(-MAX_A,Math.min(MAX_A,this.accel));
-        const p50=Math.abs(cl)/MAX_A*50;
-        const goEl=document.getElementById('accelGo');
-        const brEl=document.getElementById('accelBrake');
+        // Accel blocks (suavizado)
         const vEl=document.getElementById('accelVal');
-        if(cl>0.5){goEl.style.width=p50+'%';brEl.style.width='0%';vEl.textContent='+'+this.accel.toFixed(1)+' km/h·s';vEl.className='accel-value pos';}
-        else if(cl<-0.5){brEl.style.width=p50+'%';goEl.style.width='0%';vEl.textContent=this.accel.toFixed(1)+' km/h·s';vEl.className='accel-value neg';}
-        else{goEl.style.width='0%';brEl.style.width='0%';vEl.textContent='0.0 km/h·s';vEl.className='accel-value zero';}
+        if(Math.abs(this.accelSmooth)>0.8){
+          vEl.textContent=(this.accelSmooth>0?'+':'')+this.accelSmooth.toFixed(1)+' km/h·s';
+          vEl.className='accel-value '+(this.accelSmooth>0?'pos':'neg');
+        }else{
+          vEl.textContent='0.0 km/h·s';vEl.className='accel-value zero';
+        }
+        updateAccelBlocks(this.accelSmooth);
 
         // Gear
         const gIdx=getGearIdx(this.currentSpeed);
         const badge=document.getElementById('gearBadge');
-        const gNum=document.getElementById('gearNum');
-        const gName=document.getElementById('gearName');
         const shAlert=document.getElementById('shiftAlert');
         if(gIdx===null){
-          gNum.textContent='—';gName.textContent='—';
+          document.getElementById('gearNum').textContent='—';
+          document.getElementById('gearName').textContent='—';
           badge.classList.remove('warn','flash');shAlert.classList.remove('on');
         }else{
           const g=GEARS[gIdx];
@@ -680,7 +684,8 @@
             badge.classList.remove('flash');void badge.offsetWidth;badge.classList.add('flash');
             this.prevGearIdx=gIdx;
           }
-          gNum.textContent=g.num;gName.textContent=g.name;
+          document.getElementById('gearNum').textContent=g.num;
+          document.getElementById('gearName').textContent=g.name;
           const warn=isWarn(this.currentSpeed,gIdx);
           badge.classList.toggle('warn',warn);shAlert.classList.toggle('on',warn);
         }
@@ -692,7 +697,6 @@
           document.getElementById('tripTime').textContent=this.formatTime(this.currentTripDuration);
         },1000);
       }
-
       formatTime(ms){
         const t=Math.floor(ms/1000),m=Math.floor(t/60),s=t%60;
         return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
@@ -726,7 +730,8 @@
           this.saveHistory();
         }
         this.tripDistance=0;this.maxSpeed=0;this.currentTripDuration=0;this.pausedTime=0;
-        this.tripStartTime=Date.now();this.isRecording=false;this.prevGearIdx=null;this.accel=0;
+        this.tripStartTime=Date.now();this.isRecording=false;this.prevGearIdx=null;
+        this.accelSmooth=0;
         this.saveState();localStorage.setItem('isRecording',false);
         this.updateDisplay();
         document.getElementById('startStop').textContent='START';
@@ -755,24 +760,21 @@
         btn.textContent=vis?'▲ HIDE HISTORY':'▼ TRIP HISTORY';
         if(vis)this.updateHistoryDisplay();
       }
-
       updateHistoryDisplay(){
         const list=document.getElementById('historyList');
         if(!this.history.length){list.innerHTML='<div class="no-history">NO TRIPS RECORDED</div>';return;}
         list.innerHTML=this.history.map(t=>{
           const time=t.durationMs?this.formatTime(t.durationMs):t.time||'N/A';
-          const max=Math.round(t.maxSpeed||0);
           return `<div class="history-item">
             <div><div class="hist-km">${t.distance.toFixed(2)} km</div><div class="hist-meta">${t.date} · ${time}</div></div>
-            <div><div class="hist-max">${max} km/h</div><div class="hist-max-lbl">MAX</div></div>
+            <div><div class="hist-max">${Math.round(t.maxSpeed||0)} km/h</div><div class="hist-max-lbl">MAX</div></div>
           </div>`;
         }).join('');
       }
 
       updateStatus(msg,isError=false){
-        const el=document.getElementById('statusEl');
         document.getElementById('statusText').textContent=msg;
-        el.className='status'+(isError?' error':(this.isTracking?' active':''));
+        document.getElementById('statusEl').className='status'+(isError?' error':(this.isTracking?' active':''));
       }
     }
 
@@ -781,11 +783,9 @@
       const i=window.speedoInstance;
       if(i){i.saveState();i.saveHistory();localStorage.setItem('isRecording',i.isRecording);}
     });
-    if('serviceWorker' in navigator){
+    if('serviceWorker' in navigator)
       navigator.serviceWorker.register('service-worker.js')
         .then(r=>console.log('SW:',r.scope)).catch(e=>console.error('SW:',e));
-    }
   </script>
 </body>
 </html>
-
