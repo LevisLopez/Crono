@@ -118,9 +118,10 @@
     .rec-badge.on{display:block;}
     @keyframes recAnim{0%,100%{opacity:1;}50%{opacity:0.3;box-shadow:0 0 18px rgba(251,146,60,0.9);}}
 
-    /* ── SPEED HERO (sección principal — más grande) ── */
+    /* ── SPEED HERO — crece para llenar pantalla ── */
     .speed-hero{
-      flex:0 0 auto;
+      flex:1 1 0;
+      min-height:0;
       padding:10px 14px 6px;
       display:flex;align-items:center;
       border-bottom:1px solid rgba(255,255,255,0.05);
@@ -142,10 +143,10 @@
     .streak:nth-child(5){width:36px;background:linear-gradient(90deg,transparent,var(--vl));animation-delay:0.9s;}
     @keyframes stk{0%,100%{transform:scaleX(0.1);opacity:0;}45%,55%{transform:scaleX(1);opacity:1;}}
 
-    /* Número GRANDE — usa vw para escalar con el ancho del celular */
+    /* Número GRANDE — escala con ancho Y alto del celular */
     .spd-num{
       font-family:'Exo 2',sans-serif;
-      font-size:clamp(100px,28vw,140px);
+      font-size:clamp(80px,22vw,35dvh);
       font-weight:900;line-height:0.82;letter-spacing:-6px;color:#fff;
       position:relative;
       text-shadow:
@@ -225,17 +226,17 @@
     /* ── ACCEL BAR — grande, visible, pro ── */
     .accel-section{
       flex-shrink:0;
-      padding:8px 14px 6px;
+      padding:clamp(6px,1.5dvh,12px) 14px;
       border-bottom:1px solid rgba(255,255,255,0.04);
     }
     .accel-header{
       display:flex;justify-content:space-between;align-items:center;
       margin-bottom:6px;
     }
-    .accel-label{font-size:clamp(9px,2.5vw,11px);letter-spacing:3px;color:rgba(255,255,255,0.25);}
+    .accel-label{font-size:clamp(9px,2.5vw,12px);letter-spacing:3px;color:rgba(255,255,255,0.25);}
     .accel-value{
       font-family:'Orbitron',sans-serif;
-      font-size:clamp(14px,4vw,18px);font-weight:700;letter-spacing:1px;
+      font-size:clamp(15px,4vw,3dvh);font-weight:700;letter-spacing:1px;
       transition:all 0.2s;
     }
     .accel-value.pos{color:var(--g);text-shadow:0 0 12px rgba(74,222,128,0.8);}
@@ -244,7 +245,7 @@
 
     /* The track — tall enough to see from 60cm */
     .accel-track{
-      height:clamp(14px,3.5vw,20px);
+      height:clamp(16px,4dvh,26px);
       background:rgba(255,255,255,0.04);
       border-radius:10px;
       position:relative;overflow:hidden;
@@ -299,23 +300,23 @@
 
     /* ── DATA ROW (km, time, max) ── */
     .data-row{
-      flex-shrink:0;
+      flex:0 0 auto;
       display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;
       border-top:1px solid rgba(124,58,237,0.25);
       border-bottom:1px solid rgba(234,88,12,0.25);
       background:linear-gradient(90deg,rgba(124,58,237,0.05),rgba(234,88,12,0.05));
     }
     .data-div{background:rgba(255,255,255,0.06);}
-    .data-cell{padding:10px 8px;text-align:center;}
+    .data-cell{padding:clamp(10px,2.5dvh,18px) 8px;text-align:center;}
     .data-val{
       font-family:'Orbitron',sans-serif;
-      font-size:clamp(16px,4.5vw,22px);font-weight:700;
+      font-size:clamp(18px,5vw,4dvh);font-weight:700;
       display:block;letter-spacing:1px;
       animation:dGlow 3s ease-in-out infinite;
     }
     .data-val.dist{
       color:var(--vl);text-shadow:0 0 12px rgba(192,132,252,0.6);
-      font-size:clamp(14px,3.8vw,18px);/* distancia puede ser más larga */
+      font-size:clamp(15px,4vw,3.5dvh);
     }
     .data-val.time{color:#fff;text-shadow:0 0 8px rgba(255,255,255,0.3);animation-delay:.5s;}
     .data-val.mspd{color:var(--fl);text-shadow:0 0 12px rgba(251,146,60,0.6);animation-delay:1s;}
@@ -325,10 +326,10 @@
     .data-label{font-size:clamp(7px,2vw,9px);letter-spacing:3px;color:rgba(255,255,255,0.2);margin-top:3px;}
 
     /* ── PROGRESS BAR ── */
-    .prog-wrap{flex-shrink:0;padding:6px 14px;}
+    .prog-wrap{flex-shrink:0;padding:clamp(5px,1.2dvh,10px) 14px;}
     .prog-meta{display:flex;justify-content:space-between;margin-bottom:5px;}
-    .prog-meta span{font-size:clamp(8px,2.2vw,10px);letter-spacing:1px;color:rgba(255,255,255,0.2);}
-    .prog-track{height:clamp(6px,1.5vw,8px);background:rgba(255,255,255,0.05);border-radius:4px;position:relative;}
+    .prog-meta span{font-size:clamp(8px,2vw,11px);letter-spacing:1px;color:rgba(255,255,255,0.2);}
+    .prog-track{height:clamp(7px,1.8dvh,10px);background:rgba(255,255,255,0.05);border-radius:5px;position:relative;}
     .prog-fill{
       height:100%;width:0%;border-radius:4px;
       background:linear-gradient(90deg,#5b21b6,var(--v),var(--f),var(--gold));
@@ -350,9 +351,9 @@
       gap:8px;padding:8px 14px 6px;
     }
     .btn{
-      padding:clamp(12px,3.5vw,18px) 8px;border:none;
+      padding:clamp(14px,3.5dvh,22px) 8px;border:none;
       font-family:'Orbitron',sans-serif;
-      font-size:clamp(10px,3vw,13px);font-weight:700;
+      font-size:clamp(11px,3vw,15px);font-weight:700;
       letter-spacing:2px;text-transform:uppercase;cursor:pointer;
       transition:all 0.2s;
       clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);
