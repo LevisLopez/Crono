@@ -20,7 +20,10 @@
       font-family:'Share Tech Mono',monospace;
       background:#070010;color:#fff;user-select:none;
       display:flex;flex-direction:column;
-      width:100vw;height:100dvh;overflow:hidden;position:fixed;inset:0;
+      width:100vw;
+      height:100vh;height:100dvh;
+      overflow:hidden;position:fixed;
+      top:0;left:0;right:0;bottom:0;
     }
     body::before{
       content:'';position:fixed;inset:0;
@@ -59,8 +62,8 @@
     .flame:nth-child(9){left:91%;width:3px;background:rgba(168,85,247,0.5);animation-duration:2.4s;animation-delay:0.1s;}
     @keyframes flameUp{0%{height:0;opacity:0;}15%{opacity:1;}75%{opacity:0.5;}100%{height:55px;opacity:0;transform:scaleX(0.2);}}
 
-    /* ── APP ── */
-    .app{position:relative;z-index:10;width:100%;height:100dvh;display:flex;flex-direction:column;}
+    /* ── APP — altura forzada por JS para Android ── */
+    .app{position:relative;z-index:10;width:100%;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
 
     /* ── HEADER ── */
     .hdr{
@@ -778,7 +781,21 @@
       }
     }
 
-    window.addEventListener('load',()=>{window.speedoInstance=new MotoSpeedometer();});
+    // ── Android PWA height fix ──
+    // En Android el 100vh/dvh no siempre = pantalla real
+    // Medimos el alto visible real y lo forzamos
+    function fixHeight(){
+      const h = window.innerHeight;
+      document.querySelector('.app').style.height = h + 'px';
+      document.body.style.height = h + 'px';
+    }
+    fixHeight();
+    window.addEventListener('resize', fixHeight);
+    // Re-apply después de que la barra de Android desaparece
+    setTimeout(fixHeight, 300);
+    setTimeout(fixHeight, 800);
+
+    window.addEventListener('load',()=>{window.speedoInstance=new MotoSpeedometer();fixHeight();});
     window.addEventListener('beforeunload',()=>{
       const i=window.speedoInstance;
       if(i){i.saveState();i.saveHistory();localStorage.setItem('isRecording',i.isRecording);}
