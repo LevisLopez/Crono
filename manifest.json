@@ -1,6 +1,6 @@
 {
-  "name": "Velocímetro Moto",
-  "short_name": "MotoSpeed",
+  "name": "LeviSpeed",
+  "short_name": "LeviSpeed",
   "description": "Velocímetro GPS para motocicletas",
   "start_url": "./index.html",
   "display": "standalone",
@@ -43,3 +43,4 @@
     }
   ]
 }
+
