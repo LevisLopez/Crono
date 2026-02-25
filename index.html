@@ -39,11 +39,57 @@
         radial-gradient(ellipse at 85% 90%,rgba(234,88,12,0.15) 0%,transparent 45%);
       pointer-events:none;z-index:0;
     }
-    .scan{position:fixed;left:0;right:0;height:3px;z-index:50;pointer-events:none;
-      background:linear-gradient(90deg,transparent,var(--vl),var(--fl),transparent);
-      box-shadow:0 0 14px rgba(192,132,252,0.9),0 0 14px rgba(251,146,60,0.6);
-      animation:scanDown 5s linear infinite;}
-    @keyframes scanDown{0%{top:-3px;opacity:0;}4%{opacity:1;}96%{opacity:1;}100%{top:100%;opacity:0;}}
+    /* ── COMBO A: Radar central + pulsos radiales ── */
+    .radar-wrap{position:fixed;inset:0;z-index:50;pointer-events:none;}
+
+    /* Radar girando */
+    .radar-ring{
+      position:absolute;
+      width:220px;height:220px;
+      top:50%;left:50%;
+      transform:translate(-50%,-50%);
+      border-radius:50%;
+      border:1px solid rgba(74,222,128,0.08);
+    }
+    .radar-ring::before{
+      content:'';position:absolute;
+      top:50%;left:50%;width:50%;height:1.5px;
+      transform-origin:left center;
+      background:linear-gradient(90deg,rgba(74,222,128,0.85),transparent);
+      box-shadow:0 0 8px rgba(74,222,128,0.7);
+      animation:radarSpin 5s linear infinite;
+    }
+    .radar-ring::after{
+      content:'';position:absolute;inset:0;border-radius:50%;
+      background:conic-gradient(from 0deg,rgba(74,222,128,0.07),transparent 50%);
+      animation:radarSpin 5s linear infinite;
+    }
+    @keyframes radarSpin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+
+    /* Pulsos radiales */
+    .rpulse{
+      position:absolute;border-radius:50%;
+      top:50%;left:50%;
+      transform:translate(-50%,-50%);
+      animation:rPulseOut 3.5s ease-out infinite;
+    }
+    .rpulse:nth-child(2){border:1.5px solid rgba(192,132,252,0.55);animation-delay:0s;}
+    .rpulse:nth-child(3){border:1px solid rgba(251,146,60,0.35);animation-delay:1.2s;}
+    .rpulse:nth-child(4){border:1.5px solid rgba(192,132,252,0.35);animation-delay:2.4s;}
+    @keyframes rPulseOut{
+      0%{width:0;height:0;opacity:0.9;}
+      100%{width:400px;height:400px;opacity:0;}
+    }
+
+    /* Puntos del radar */
+    .rdot{
+      position:absolute;border-radius:50%;z-index:51;
+      animation:rdotBlink 5s linear infinite;
+    }
+    .rdot:nth-child(5){width:5px;height:5px;top:32%;left:63%;background:var(--g);box-shadow:0 0 8px var(--g);animation-delay:1.0s;}
+    .rdot:nth-child(6){width:4px;height:4px;top:64%;left:36%;background:var(--fl);box-shadow:0 0 6px var(--fl);animation-delay:2.8s;}
+    .rdot:nth-child(7){width:5px;height:5px;top:42%;left:74%;background:var(--g);box-shadow:0 0 8px var(--g);animation-delay:4.2s;}
+    @keyframes rdotBlink{0%,88%,100%{opacity:0;}90%{opacity:1;}95%{opacity:0.5;}97%{opacity:0;}}
     #particles{position:fixed;inset:0;z-index:1;pointer-events:none;}
     .c-tr{position:fixed;top:0;right:0;width:44px;height:44px;z-index:15;pointer-events:none;
       background:linear-gradient(225deg,var(--v) 45%,transparent 45%);}
@@ -334,7 +380,11 @@
 </head>
 <body>
   <canvas id="particles"></canvas>
-  <div class="scan"></div>
+  <div class="radar-wrap">
+    <div class="radar-ring"></div>
+    <div class="rpulse"></div><div class="rpulse"></div><div class="rpulse"></div>
+    <div class="rdot"></div><div class="rdot"></div><div class="rdot"></div>
+  </div>
   <div class="flames">
     <div class="flame"></div><div class="flame"></div><div class="flame"></div>
     <div class="flame"></div><div class="flame"></div><div class="flame"></div>
