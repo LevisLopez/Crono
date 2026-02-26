@@ -338,20 +338,26 @@
     .odo-row{
       flex-shrink:0;
       display:flex;justify-content:space-between;align-items:center;
-      padding:4px 14px;
-      border-bottom:1px solid rgba(124,58,237,0.12);
-      background:rgba(124,58,237,0.04);
+      padding:5px 14px;
+      border-bottom:1px solid rgba(124,58,237,0.2);
+      background:rgba(124,58,237,0.06);
     }
-    .odo-left{display:flex;align-items:center;gap:8px;}
-    .odo-label{font-size:clamp(7px,1.8vw,8px);letter-spacing:3px;color:rgba(255,255,255,0.2);}
-    .odo-val{font-family:'Orbitron',sans-serif;font-size:clamp(11px,3vw,13px);
-      font-weight:700;color:rgba(192,132,252,0.7);letter-spacing:1px;}
+    .odo-left{display:flex;align-items:center;gap:10px;}
+    .odo-label{font-size:clamp(7px,1.8vw,9px);letter-spacing:3px;color:rgba(255,255,255,0.25);}
+    .odo-val{
+      font-family:'Orbitron',sans-serif;
+      font-size:clamp(16px,4.5vw,5dvh);
+      font-weight:900;color:var(--vl);letter-spacing:1px;
+      text-shadow:0 0 12px rgba(192,132,252,0.6);
+      animation:dGlow 3s ease-in-out infinite;
+    }
     .odo-val.pop{animation:odoPop 0.6s ease-out;}
-    @keyframes odoPop{0%{color:#fff;text-shadow:0 0 20px rgba(192,132,252,1);}100%{color:rgba(192,132,252,0.7);}}
+    @keyframes odoPop{0%{color:#fff;text-shadow:0 0 30px rgba(192,132,252,1),0 0 60px rgba(192,132,252,0.5);}100%{color:var(--vl);text-shadow:0 0 12px rgba(192,132,252,0.6);}}
+    .odo-unit{font-size:clamp(7px,1.8vw,9px);letter-spacing:3px;color:rgba(255,255,255,0.2);margin-left:2px;}
     .odo-reset-hint{font-size:clamp(6px,1.5vw,7px);letter-spacing:2px;
-      color:rgba(255,255,255,0.1);cursor:pointer;padding:3px 6px;
-      border:1px solid rgba(255,255,255,0.06);border-radius:3px;transition:all 0.2s;}
-    .odo-reset-hint:active{color:rgba(255,255,255,0.4);border-color:rgba(255,255,255,0.2);}
+      color:rgba(255,255,255,0.15);cursor:pointer;padding:4px 8px;
+      border:1px solid rgba(255,255,255,0.1);border-radius:3px;transition:all 0.2s;}
+    .odo-reset-hint:active{color:rgba(255,255,255,0.5);border-color:rgba(255,255,255,0.3);}
 
     /* ── PROGRESS BAR ── */
     .prog-wrap{flex-shrink:0;padding:clamp(4px,1dvh,7px) 14px;}
@@ -468,7 +474,7 @@
     <div class="led-section">
       <div class="led-hdr">
         <span class="led-lbl">SPEED LEVEL</span>
-        <span class="led-status" id="ledStatus">NORMAL</span>
+
       </div>
       <div class="led-grid" id="ledGrid"></div>
     </div>
@@ -506,7 +512,8 @@
     <div class="odo-row">
       <div class="odo-left">
         <span class="odo-label">TOTAL ODO</span>
-        <span class="odo-val" id="odoVal">0.0 km</span>
+        <span class="odo-val" id="odoVal">0.0</span>
+        <span class="odo-unit">km</span>
       </div>
       <span class="odo-reset-hint" id="odoResetBtn" onclick="confirmOdoReset()">RESET ODO</span>
     </div>
@@ -524,6 +531,11 @@
       <button class="btn btn-start" id="startStop">START</button>
       <button class="btn btn-reset" id="resetTrip">RESET</button>
       <button class="btn btn-hist" id="toggleHistory">▼ TRIP HISTORY</button>
+    </div>
+
+    <div class="mock-footer" style="text-align:center;font-size:6px;letter-spacing:3px;
+      color:rgba(255,255,255,0.08);padding:3px 0;border-top:1px solid rgba(124,58,237,0.08);">
+      LEVISPEED v20
     </div>
 
     <!-- HISTORY -->
@@ -586,11 +598,16 @@
     let odoConfirmTimer = null;
 
     function updateOdoDisplay(){
-      const el = document.getElementById('odoVal');
+      const el=document.getElementById('odoVal');
+      const unit=document.querySelector('.odo-unit');
       if(!el) return;
-      el.textContent = totalOdo >= 1000
-        ? (totalOdo/1000).toFixed(2) + ' Mkm'   // Megakm para valores muy grandes
-        : totalOdo.toFixed(1) + ' km';
+      if(totalOdo>=1000){
+        el.textContent=(totalOdo/1000).toFixed(2);
+        if(unit) unit.textContent='Mkm';
+      } else {
+        el.textContent=totalOdo.toFixed(1);
+        if(unit) unit.textContent='km';
+      }
     }
 
     function addOdoKm(km){
@@ -655,13 +672,6 @@
 
     function updateLed(spd){
       const t=Date.now()/1000;
-      const{lc,label}=spd>60
-        ?{lc:'#ef4444',label:'⚠ DANGER'}
-        :spd>40
-          ?{lc:'var(--fl)',label:'CAUTION'}
-          :{lc:'var(--g)',label:'NORMAL'};
-      document.getElementById('ledStatus').textContent=label;
-      document.getElementById('ledStatus').style.color=lc;
       for(let c=0;c<LED_COLS;c++){
         // Llenado directo: 0→80 km/h = 0→6 segs. Sin multiplicar por noise para no cortarlo.
         const base=(spd/80)*LED_SEGS;
