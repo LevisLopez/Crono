@@ -348,6 +348,7 @@
 
     /* ── BUTTONS ── */
     .controls{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 14px 5px;}
+    .controls.paused{grid-template-columns:1fr 1fr 1fr;}
     .btn{padding:clamp(11px,2.8dvh,18px) 8px;border:none;
       font-family:'Orbitron',sans-serif;font-size:clamp(11px,3vw,14px);font-weight:700;
       letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;
@@ -359,6 +360,8 @@
     .btn-start{background:rgba(124,58,237,0.18);color:var(--vl);border:1px solid rgba(124,58,237,0.6);text-shadow:0 0 10px rgba(192,132,252,0.7);}
     .btn-pause{background:rgba(251,146,60,0.15);color:var(--fl);border:1px solid rgba(234,88,12,0.6);text-shadow:0 0 10px rgba(251,146,60,0.7);}
     .btn-reset{background:rgba(234,88,12,0.1);color:var(--fl);border:1px solid rgba(234,88,12,0.45);}
+    .btn-fin{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.45);
+      text-shadow:0 0 10px rgba(239,68,68,0.5);display:none;}
     .btn-hist{grid-column:1/-1;clip-path:none;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.08);letter-spacing:4px;}
     .btn-hist:active{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);}
 
@@ -494,7 +497,8 @@
     <!-- CONTROLS -->
     <div class="controls">
       <button class="btn btn-start" id="startStop">START</button>
-      <button class="btn btn-reset" id="resetTrip">RESET</button>
+      <button class="btn btn-reset" id="resetTrip">RESET KM</button>
+      <button class="btn btn-fin"   id="finViaje">⏹ FIN VIAJE</button>
       <button class="btn btn-hist" id="toggleHistory">▼ TRIP HISTORY</button>
     </div>
 
@@ -865,13 +869,26 @@
           }
         }, {once:true});
         const btn=document.getElementById('startStop');
-        if(this.isRecording){btn.textContent='PAUSE';btn.className='btn btn-pause';document.getElementById('recBadge').classList.add('on');}
+        const finBtn=document.getElementById('finViaje');
+        const controls=document.querySelector('.controls');
+        if(this.isRecording){
+          btn.textContent='PAUSE';btn.className='btn btn-pause';
+          document.getElementById('recBadge').classList.add('on');
+          finBtn.style.display='none';
+          controls.classList.remove('paused');
+        } else if(this.currentTripDuration>0){
+          // Venía pausado — mostrar FIN VIAJE
+          btn.textContent='RESUME';btn.className='btn btn-start';
+          finBtn.style.display='block';
+          controls.classList.add('paused');
+        }
         setInterval(()=>this.saveState(),30000);
       }
 
       setupListeners(){
         document.getElementById('startStop').addEventListener('click',()=>this.toggleRecording());
         document.getElementById('resetTrip').addEventListener('click',()=>this.resetTrip());
+        document.getElementById('finViaje').addEventListener('click',()=>this.finViaje());
         document.getElementById('toggleHistory').addEventListener('click',()=>this.toggleHistory());
         if('wakeLock' in navigator){
           let wl=null;
@@ -1057,25 +1074,33 @@
         if(!this.isTracking){this.updateStatus('WAITING FOR GPS...',true);return;}
         this.isRecording=!this.isRecording;
         const btn=document.getElementById('startStop');
+        const finBtn=document.getElementById('finViaje');
+        const controls=document.querySelector('.controls');
         const badge=document.getElementById('recBadge');
         if(this.isRecording){
+          // Si viene de START (no resume), resetear elevación
+          if(btn.textContent==='START') resetElevation();
           this.tripStartTime=Date.now()-this.pausedTime;
           btn.textContent='PAUSE';btn.className='btn btn-pause';
           badge.classList.add('on');this.updateStatus('RECORDING');
-          // Voice: START
+          finBtn.style.display='none';
+          controls.classList.remove('paused');
           this.voiceReady=true;
           Voice.speak(`LeviSpeed started. Time is ${Voice.getTimeStr()}`);
         }else{
           this.pausedTime=Date.now()-this.tripStartTime;
           btn.textContent='RESUME';btn.className='btn btn-start';
           badge.classList.remove('on');this.updateStatus('PAUSED');
-          // Voice: PAUSE
+          // Mostrar FIN VIAJE solo cuando pausado
+          finBtn.style.display='block';
+          controls.classList.add('paused');
           Voice.speak(`Ride paused. Time is ${Voice.getTimeStr()}`);
         }
         this.saveState();localStorage.setItem('isRecording',this.isRecording);
       }
 
-      resetTrip(){
+      finViaje(){
+        // Guarda en historial y resetea TODO incluyendo elevación
         if(this.tripDistance>0||this.currentTripDuration>0){
           this.history.unshift({
             date:new Date().toLocaleDateString('en-US'),
@@ -1087,17 +1112,41 @@
         }
         this.tripDistance=0;this.maxSpeed=0;this.currentTripDuration=0;this.pausedTime=0;
         this.tripStartTime=Date.now();this.isRecording=false;this.prevGearIdx=null;
-        this.accelSmooth=0;
-        resetElevation(); // reset elevation profile reference
+        this.accelSmooth=0;this.lastSpeedZone=0;this.lastAlertSpeed=0;this.last50km=0;
+        resetElevation(); // reset elevación completo
         this.saveState();localStorage.setItem('isRecording',false);
         this.updateDisplay();
-        document.getElementById('startStop').textContent='START';
-        document.getElementById('startStop').className='btn btn-start';
+        const btn=document.getElementById('startStop');
+        btn.textContent='START';btn.className='btn btn-start';
+        const finBtn=document.getElementById('finViaje');
+        finBtn.style.display='none';
+        document.querySelector('.controls').classList.remove('paused');
         document.getElementById('recBadge').classList.remove('on');
         document.getElementById('tripTime').textContent='00:00';
         document.getElementById('progFill').style.width='0%';
         this.updateHistoryDisplay();
         this.updateStatus(this.isTracking?'STANDBY':'INIT GPS');
+      }
+
+      resetTrip(){
+        // SOLO resetea km, tiempo y maxSpeed — elevación intacta
+        if(this.tripDistance>0||this.currentTripDuration>0){
+          this.history.unshift({
+            date:new Date().toLocaleDateString('en-US'),
+            time:this.formatTime(this.currentTripDuration),
+            distance:this.tripDistance,maxSpeed:this.maxSpeed,
+            durationMs:this.currentTripDuration
+          });
+          this.saveHistory();
+        }
+        this.tripDistance=0;this.maxSpeed=0;this.currentTripDuration=0;this.pausedTime=0;
+        this.tripStartTime=Date.now();
+        // NO resetear elevación
+        this.saveState();
+        this.updateDisplay();
+        document.getElementById('tripTime').textContent='00:00';
+        document.getElementById('progFill').style.width='0%';
+        this.updateHistoryDisplay();
       }
 
       saveState(){
