@@ -262,57 +262,58 @@
     .shift-alert.on{display:block;}
 
     /* ══════════════════════════════════════
-       ACCEL DISPLAY — reemplaza barra loca
-       Muestra 8 bloques que se iluminan
-       según la aceleración/frenado
+       LED SPEED LEVEL
     ══════════════════════════════════════ */
-    .accel-section{
+    .led-section{
       flex-shrink:0;
-      padding:6px 14px 5px;
+      padding:5px 14px 4px;
+      border-top:1px solid rgba(255,255,255,0.04);
+    }
+    .led-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+    .led-lbl{font-size:clamp(7px,2vw,9px);letter-spacing:3px;color:rgba(255,255,255,0.25);}
+    .led-status{font-family:'Orbitron',sans-serif;font-size:clamp(9px,2.5vw,11px);font-weight:700;transition:color 0.3s;}
+    .led-grid{display:flex;gap:3px;}
+    .led-col{display:flex;flex-direction:column-reverse;gap:2px;flex:1;}
+    .lseg{height:clamp(6px,1.5dvh,9px);border-radius:2px;
+      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);
+      transition:background 0.1s,box-shadow 0.1s,border-color 0.1s;}
+    .lseg.green{ background:var(--g); box-shadow:0 0 5px rgba(74,222,128,0.8); border-color:var(--g);}
+    .lseg.orange{background:var(--fl);box-shadow:0 0 5px rgba(251,146,60,0.8);border-color:var(--fl);}
+    .lseg.red{   background:#ef4444;  box-shadow:0 0 7px rgba(239,68,68,1);   border-color:#ef4444;
+      animation:redSeg 0.5s ease-in-out infinite;}
+    @keyframes redSeg{0%,100%{box-shadow:0 0 7px rgba(239,68,68,1);}50%{box-shadow:0 0 16px rgba(239,68,68,1),0 0 28px rgba(239,68,68,0.5);}}
+
+    /* ══════════════════════════════════════
+       ELEVATION PROFILE
+    ══════════════════════════════════════ */
+    .elev-section{
+      flex-shrink:0;position:relative;
+      overflow:hidden;
       border-top:1px solid rgba(255,255,255,0.04);
       border-bottom:1px solid rgba(255,255,255,0.04);
+      background:#050010;
     }
-    .accel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
-    .accel-label{font-size:clamp(8px,2.2vw,10px);letter-spacing:3px;color:rgba(255,255,255,0.25);}
-    .accel-value{font-family:'Orbitron',sans-serif;font-size:clamp(13px,3.5vw,16px);font-weight:700;letter-spacing:1px;transition:all 0.3s;}
-    .accel-value.pos{color:var(--g);text-shadow:0 0 12px rgba(74,222,128,0.8);}
-    .accel-value.neg{color:var(--fl);text-shadow:0 0 12px rgba(251,146,60,0.8);}
-    .accel-value.zero{color:rgba(255,255,255,0.2);}
-
-    /* Bloques de aceleración */
-    .accel-blocks{
-      display:flex;align-items:center;gap:3px;height:clamp(18px,4dvh,26px);
+    .elev-section canvas{display:block;width:100%;}
+    .elev-lbl{position:absolute;font-size:clamp(6px,1.6vw,8px);letter-spacing:2px;
+      color:rgba(255,255,255,0.18);pointer-events:none;z-index:3;}
+    .elev-lbl.tl{top:4px;left:8px;}
+    .elev-lbl.tr{top:4px;right:8px;}
+    .elev-lbl.bl{bottom:4px;left:8px;}
+    .elev-lbl.br{bottom:4px;right:8px;}
+    .slope-badge{
+      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      font-family:'Orbitron',sans-serif;font-size:clamp(7px,2vw,9px);font-weight:700;
+      padding:2px 7px;border-radius:3px;z-index:3;pointer-events:none;transition:all 0.4s;
     }
-    .accel-divider{
-      width:2px;height:100%;background:rgba(255,255,255,0.25);
-      border-radius:1px;flex-shrink:0;margin:0 2px;
-    }
-    .ablock{
-      flex:1;height:100%;border-radius:3px;
-      background:rgba(255,255,255,0.05);
-      border:1px solid rgba(255,255,255,0.08);
-      transition:background 0.15s, box-shadow 0.15s, transform 0.15s;
-    }
-    /* Bloques de frenado (izquierda, naranja) */
-    .ablock.brake.active{
-      background:var(--fl);
-      box-shadow:0 0 8px rgba(251,146,60,0.9),0 0 16px rgba(251,146,60,0.4);
-      transform:scaleY(1.1);
-    }
-    .ablock.brake.active.b1{background:rgba(251,146,60,0.5);}
-    .ablock.brake.active.b2{background:rgba(251,146,60,0.7);}
-    .ablock.brake.active.b3{background:rgba(251,146,60,0.9);}
-    .ablock.brake.active.b4{background:var(--fl);box-shadow:0 0 12px rgba(251,146,60,1),0 0 24px rgba(251,146,60,0.5);}
-    /* Bloques de aceleración (derecha, verde→violeta) */
-    .ablock.go.active{
-      background:var(--g);
-      box-shadow:0 0 8px rgba(74,222,128,0.9),0 0 16px rgba(74,222,128,0.4);
-      transform:scaleY(1.1);
-    }
-    .ablock.go.active.g1{background:rgba(74,222,128,0.5);}
-    .ablock.go.active.g2{background:rgba(74,222,128,0.7);}
-    .ablock.go.active.g3{background:rgba(192,132,252,0.8);box-shadow:0 0 10px rgba(192,132,252,0.8);}
-    .ablock.go.active.g4{background:var(--vl);box-shadow:0 0 12px rgba(192,132,252,1),0 0 24px rgba(192,132,252,0.5);}
+    .slope-badge.flat{color:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.4);}
+    .slope-badge.up{  color:var(--fl);border:1px solid rgba(251,146,60,0.4);background:rgba(0,0,0,0.5);text-shadow:0 0 8px rgba(251,146,60,0.7);}
+    .slope-badge.down{color:var(--g); border:1px solid rgba(74,222,128,0.4);background:rgba(0,0,0,0.5);text-shadow:0 0 8px rgba(74,222,128,0.7);}
+    .center-divider{position:absolute;top:0;bottom:0;left:50%;width:1px;
+      background:rgba(255,255,255,0.1);z-index:3;pointer-events:none;}
+    .net-indicator{position:absolute;bottom:4px;right:8px;
+      font-size:clamp(6px,1.6vw,7px);letter-spacing:1px;z-index:3;transition:color 0.3s;}
+    .net-indicator.on{color:rgba(74,222,128,0.5);}
+    .net-indicator.off{color:rgba(255,255,255,0.12);}
 
     /* ── DATA ROW ── */
     .data-row{
@@ -444,26 +445,25 @@
     <!-- SHIFT ALERT -->
     <div class="shift-alert" id="shiftAlert">⚠ SHIFT DOWN</div>
 
-    <!-- ACCEL BLOCKS -->
-    <div class="accel-section">
-      <div class="accel-header">
-        <span class="accel-label">ACCELERATION</span>
-        <span class="accel-value zero" id="accelVal">0.0 km/h·s</span>
+    <!-- LED SPEED LEVEL -->
+    <div class="led-section">
+      <div class="led-hdr">
+        <span class="led-lbl">SPEED LEVEL</span>
+        <span class="led-status" id="ledStatus">NORMAL</span>
       </div>
-      <div class="accel-blocks">
-        <!-- 4 bloques frenado (derecha→izquierda = más frenado) -->
-        <div class="ablock brake b4" id="b4"></div>
-        <div class="ablock brake b3" id="b3"></div>
-        <div class="ablock brake b2" id="b2"></div>
-        <div class="ablock brake b1" id="b1"></div>
-        <!-- Divisor central -->
-        <div class="accel-divider"></div>
-        <!-- 4 bloques aceleración (izquierda→derecha = más aceleración) -->
-        <div class="ablock go g1" id="g1"></div>
-        <div class="ablock go g2" id="g2"></div>
-        <div class="ablock go g3" id="g3"></div>
-        <div class="ablock go g4" id="g4"></div>
-      </div>
+      <div class="led-grid" id="ledGrid"></div>
+    </div>
+
+    <!-- ELEVATION PROFILE -->
+    <div class="elev-section">
+      <canvas id="elevCanvas" height="56"></canvas>
+      <div class="center-divider"></div>
+      <span class="elev-lbl tl">◄ PAST</span>
+      <span class="elev-lbl tr">AHEAD ►</span>
+      <span class="elev-lbl bl" id="elevMin"></span>
+      <span class="elev-lbl br" id="elevMax"></span>
+      <div class="slope-badge flat" id="slopeBadge">── FLAT</div>
+      <span class="net-indicator off" id="netIndicator">OFFLINE</span>
     </div>
 
     <!-- DATA ROW -->
@@ -550,32 +550,206 @@
     function getGearIdx(s){if(s<=0)return null;for(let i=0;i<GEARS.length;i++)if(s<=GEARS[i].max)return i;return GEARS.length-1;}
     function isWarn(s,i){if(i<=0)return false;return s<=(GEARS[i-1].max+3)&&s>GEARS[i-1].max;}
 
-    // ── Accel blocks helper ──
-    // Smoothed acceleration to avoid pendulum effect
-    function updateAccelBlocks(accel){
-      const THRESH=0.8; // mínimo para activar bloques
-      const LEVELS=[2,5,10,18]; // km/h·s para cada bloque
+    // ══════════════════════════════════════
+    // LED SPEED LEVEL
+    // ══════════════════════════════════════
+    const LED_COLS=14, LED_SEGS=6;
+    const ledNoise=Array.from({length:LED_COLS},()=>0.78+Math.random()*0.44);
 
-      // Apagar todos
-      ['b1','b2','b3','b4','g1','g2','g3','g4'].forEach(id=>{
-        document.getElementById(id).classList.remove('active');
-      });
-
-      if(accel > THRESH){
-        // Acelerando — iluminar bloques go de izquierda a derecha
-        if(accel>=LEVELS[0]) document.getElementById('g1').classList.add('active');
-        if(accel>=LEVELS[1]) document.getElementById('g2').classList.add('active');
-        if(accel>=LEVELS[2]) document.getElementById('g3').classList.add('active');
-        if(accel>=LEVELS[3]) document.getElementById('g4').classList.add('active');
-      } else if(accel < -THRESH){
-        const a=Math.abs(accel);
-        // Frenando — iluminar bloques brake de derecha a izquierda
-        if(a>=LEVELS[0]) document.getElementById('b1').classList.add('active');
-        if(a>=LEVELS[1]) document.getElementById('b2').classList.add('active');
-        if(a>=LEVELS[2]) document.getElementById('b3').classList.add('active');
-        if(a>=LEVELS[3]) document.getElementById('b4').classList.add('active');
+    function buildLedGrid(){
+      const g=document.getElementById('ledGrid');
+      for(let c=0;c<LED_COLS;c++){
+        const col=document.createElement('div');col.className='led-col';
+        for(let s=0;s<LED_SEGS;s++){
+          const seg=document.createElement('div');
+          seg.className='lseg';seg.id=`ls_${c}_${s}`;
+          col.appendChild(seg);
+        }
+        g.appendChild(col);
       }
     }
+    buildLedGrid();
+
+    function updateLed(spd){
+      const t=Date.now()/1000;
+      // Umbrales: 0-40 verde, 41-60 naranja, 61+ rojo, lleno a 80
+      const{lc,label}=spd>60
+        ?{lc:'#ef4444',label:'⚠ DANGER'}
+        :spd>40
+          ?{lc:'var(--fl)',label:'CAUTION'}
+          :{lc:'var(--g)',label:'NORMAL'};
+      document.getElementById('ledStatus').textContent=label;
+      document.getElementById('ledStatus').style.color=lc;
+      for(let c=0;c<LED_COLS;c++){
+        const wave=Math.sin(t*2+c*0.6)*0.25*(spd/80);
+        const raw=Math.min(LED_SEGS,(spd/80)*LED_SEGS+wave*ledNoise[c]*0.5);
+        const filled=Math.min(LED_SEGS,Math.max(0,Math.round(raw*ledNoise[c]*0.88)));
+        for(let s=0;s<LED_SEGS;s++){
+          const el=document.getElementById(`ls_${c}_${s}`);
+          let cls='lseg';
+          if(s<filled){
+            // s=0,1 verde · s=2,3 naranja · s=4,5 rojo
+            if(s<=1) cls='lseg green';
+            else if(s<=3) cls='lseg orange';
+            else cls='lseg red';
+          }
+          el.className=cls;
+        }
+      }
+    }
+
+    // ══════════════════════════════════════
+    // ELEVATION PROFILE
+    // ══════════════════════════════════════
+    const elevCvs=document.getElementById('elevCanvas');
+    const elevCtx=elevCvs.getContext('2d');
+    const MAX_PAST=60, MAX_FUTURE=60;
+    let pastAlt=[], futureAlt=[], isOnlineElev=false;
+    let futureTimer=0;
+
+    function resizeElev(){elevCvs.width=elevCvs.offsetWidth||window.innerWidth;}
+    resizeElev();window.addEventListener('resize',resizeElev);
+
+    function genFuture(lastAlt, slope){
+      futureAlt=[];let a=lastAlt,sl=slope;
+      for(let i=0;i<MAX_FUTURE;i++){
+        sl+=(Math.random()-0.5)*1.2;sl=Math.max(-1.5,Math.min(1.5,sl));
+        a+=sl+Math.sin(i/MAX_FUTURE*Math.PI*3)*0.6;
+        futureAlt.push(a+(Math.random()-0.5)*1.5);
+      }
+    }
+
+    function addElevPoint(alt){
+      pastAlt.push(alt);
+      if(pastAlt.length>MAX_PAST) pastAlt.shift();
+      futureTimer++;
+      // Si online, regenerar futuro cada 15 puntos
+      if(isOnlineElev && futureTimer>15){
+        futureTimer=0;
+        const slope=pastAlt.length>3
+          ?(pastAlt[pastAlt.length-1]-pastAlt[pastAlt.length-4])/3:0;
+        genFuture(alt,slope);
+      }
+    }
+
+    function drawElevation(){
+      const W=elevCvs.width, H=elevCvs.height;
+      if(!W||!H||pastAlt.length<2) return;
+      elevCtx.clearRect(0,0,W,H);
+      const halfW=W/2;
+      const curAlt=pastAlt[pastAlt.length-1];
+
+      // Escala global
+      const allPts=[...pastAlt,...(isOnlineElev&&futureAlt.length?futureAlt:[curAlt])];
+      const minA=Math.min(...allPts)-6, maxA=Math.max(...allPts)+6;
+      const range=maxA-minA||1;
+      const yOf=a=>H-6-((a-minA)/range)*(H-14);
+
+      // ── Historial izquierdo ──
+      elevCtx.beginPath();
+      elevCtx.moveTo(0,H);
+      pastAlt.forEach((a,i)=>{
+        elevCtx.lineTo((i/(pastAlt.length-1))*(halfW-2), yOf(a));
+      });
+      elevCtx.lineTo(halfW-2,H);elevCtx.closePath();
+      const gL=elevCtx.createLinearGradient(0,0,0,H);
+      gL.addColorStop(0,'rgba(124,58,237,0.3)');gL.addColorStop(1,'rgba(124,58,237,0)');
+      elevCtx.fillStyle=gL;elevCtx.fill();
+
+      elevCtx.beginPath();
+      pastAlt.forEach((a,i)=>{
+        const x=(i/(pastAlt.length-1))*(halfW-2);
+        i===0?elevCtx.moveTo(x,yOf(a)):elevCtx.lineTo(x,yOf(a));
+      });
+      elevCtx.strokeStyle='rgba(192,132,252,0.8)';elevCtx.lineWidth=1.8;
+      elevCtx.shadowBlur=5;elevCtx.shadowColor='rgba(192,132,252,0.4)';
+      elevCtx.stroke();elevCtx.shadowBlur=0;
+
+      // ── Lado derecho ──
+      const posY=yOf(curAlt);
+      if(isOnlineElev && futureAlt.length>0){
+        elevCtx.beginPath();
+        elevCtx.moveTo(halfW+2,H);
+        futureAlt.forEach((a,i)=>{
+          elevCtx.lineTo(halfW+2+(i/(futureAlt.length-1))*(halfW-4), yOf(a));
+        });
+        elevCtx.lineTo(W,H);elevCtx.closePath();
+        const gR=elevCtx.createLinearGradient(halfW,0,W,0);
+        gR.addColorStop(0,'rgba(74,222,128,0.18)');gR.addColorStop(1,'rgba(74,222,128,0.02)');
+        elevCtx.fillStyle=gR;elevCtx.fill();
+
+        elevCtx.beginPath();
+        futureAlt.forEach((a,i)=>{
+          const x=halfW+2+(i/(futureAlt.length-1))*(halfW-4);
+          i===0?elevCtx.moveTo(x,yOf(a)):elevCtx.lineTo(x,yOf(a));
+        });
+        const lg=elevCtx.createLinearGradient(halfW,0,W,0);
+        lg.addColorStop(0,'rgba(74,222,128,0.9)');lg.addColorStop(1,'rgba(74,222,128,0.1)');
+        elevCtx.strokeStyle=lg;elevCtx.lineWidth=1.5;elevCtx.setLineDash([4,3]);
+        elevCtx.shadowBlur=5;elevCtx.shadowColor='rgba(74,222,128,0.4)';
+        elevCtx.stroke();elevCtx.shadowBlur=0;elevCtx.setLineDash([]);
+      } else {
+        // Offline — punteada gris desvanecida
+        for(let x=halfW+6;x<W-12;x+=9){
+          const alpha=0.22*(1-((x-halfW)/halfW)*0.9);
+          elevCtx.beginPath();elevCtx.moveTo(x,posY);elevCtx.lineTo(x+4,posY);
+          elevCtx.strokeStyle=`rgba(255,255,255,${alpha})`;elevCtx.lineWidth=1.2;elevCtx.stroke();
+        }
+        elevCtx.fillStyle='rgba(255,255,255,0.1)';
+        elevCtx.font='9px Orbitron,monospace';
+        elevCtx.fillText('?',W-13,posY+4);
+      }
+
+      // ── Punto posición actual (centro) ──
+      const pulse=0.5+0.5*Math.sin(Date.now()/280);
+      elevCtx.beginPath();elevCtx.arc(halfW,posY,8,0,Math.PI*2);
+      elevCtx.fillStyle=`rgba(255,255,255,${0.04+pulse*0.05})`;elevCtx.fill();
+      elevCtx.beginPath();elevCtx.arc(halfW,posY,5,0,Math.PI*2);
+      elevCtx.fillStyle=`rgba(251,146,60,${0.35+pulse*0.4})`;
+      elevCtx.shadowBlur=8;elevCtx.shadowColor='rgba(251,146,60,0.6)';elevCtx.fill();
+      elevCtx.beginPath();elevCtx.arc(halfW,posY,2.5,0,Math.PI*2);
+      elevCtx.fillStyle='#fff';elevCtx.shadowBlur=10;elevCtx.shadowColor='rgba(255,255,255,1)';
+      elevCtx.fill();elevCtx.shadowBlur=0;
+      // Línea al suelo
+      elevCtx.beginPath();elevCtx.moveTo(halfW,posY+4);elevCtx.lineTo(halfW,H-2);
+      elevCtx.strokeStyle='rgba(255,255,255,0.1)';elevCtx.lineWidth=1;
+      elevCtx.setLineDash([2,3]);elevCtx.stroke();elevCtx.setLineDash([]);
+
+      // ── Cuadrícula ──
+      elevCtx.setLineDash([2,6]);elevCtx.strokeStyle='rgba(255,255,255,0.03)';elevCtx.lineWidth=1;
+      [H/3,H*2/3].forEach(y=>{elevCtx.beginPath();elevCtx.moveTo(0,y);elevCtx.lineTo(W,y);elevCtx.stroke();});
+      elevCtx.setLineDash([]);
+
+      // ── Min/Max labels ──
+      document.getElementById('elevMin').textContent=Math.round(minA+6)+'m';
+      document.getElementById('elevMax').textContent=Math.round(maxA-6)+'m';
+
+      // ── Pendiente ──
+      if(pastAlt.length>=10){
+        const ar=pastAlt.slice(-5).reduce((a,b)=>a+b,0)/5;
+        const ao=pastAlt.slice(-10,-5).reduce((a,b)=>a+b,0)/5;
+        const diff=ar-ao;
+        const badge=document.getElementById('slopeBadge');
+        if(diff>2){badge.textContent='▲ UPHILL';badge.className='slope-badge up';}
+        else if(diff<-2){badge.textContent='▼ DOWNHILL';badge.className='slope-badge down';}
+        else{badge.textContent='── FLAT';badge.className='slope-badge flat';}
+      }
+    }
+
+    // Verificar conectividad cada 10 segundos
+    function checkOnline(){
+      isOnlineElev=navigator.onLine;
+      const ni=document.getElementById('netIndicator');
+      ni.textContent=isOnlineElev?'ONLINE':'OFFLINE';
+      ni.className='net-indicator '+(isOnlineElev?'on':'off');
+    }
+    checkOnline();
+    window.addEventListener('online',checkOnline);
+    window.addEventListener('offline',checkOnline);
+    setInterval(checkOnline,10000);
+
+    // Loop de elevación (independiente del GPS, 30fps)
+    setInterval(()=>{ drawElevation(); }, 33);
 
     // ══════════════════════════════════════
     // VOICE SYSTEM — Web Speech API
@@ -717,8 +891,11 @@
         }
 
         // Altitude
-        if(pos.coords.altitude!=null)
-          document.getElementById('altVal').textContent=Math.round(pos.coords.altitude)+' m';
+        if(pos.coords.altitude!=null){
+          const alt=Math.round(pos.coords.altitude);
+          document.getElementById('altVal').textContent=alt+' m';
+          addElevPoint(alt);
+        }
 
         // Distance
         if(this.isRecording&&this.lastPosition){
