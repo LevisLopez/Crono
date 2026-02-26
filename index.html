@@ -873,7 +873,16 @@
       speaking: false,
       queue: [],
 
-      // Formato hora en inglés: "3:45 PM"
+      // Audio silencioso de 0.1s — fuerza el canal multimedia de Android
+      // Mismo truco que usa Waze/Maps para tener prioridad de volumen
+      _silentAudio: (()=>{
+        // WAV PCM 8bit 8kHz 0.1s — silencio puro
+        const wav='UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+        const a=new Audio('data:audio/wav;base64,'+wav);
+        a.volume=0.001;
+        return a;
+      })(),
+
       getTimeStr(){
         const now = new Date();
         let h = now.getHours();
@@ -886,9 +895,7 @@
 
       speak(text, priority=false){
         if(!this.synth) return;
-        // Si es prioritario (alertas 80/100) cancela lo anterior
-        if(priority) { this.synth.cancel(); this.queue=[]; }
-        // No acumular más de 2 mensajes en cola
+        if(priority){ this.synth.cancel(); this.queue=[]; }
         if(this.queue.length >= 2) return;
         this.queue.push(text);
         if(!this.speaking) this._next();
@@ -896,16 +903,28 @@
 
       _next(){
         if(!this.queue.length){ this.speaking=false; return; }
-        this.speaking = true;
-        const text = this.queue.shift();
-        const utt = new SpeechSynthesisUtterance(text);
-        utt.lang    = 'en-US';
-        utt.rate    = 0.92;   // un poco más lento, más claro
-        utt.pitch   = 1.0;
-        utt.volume  = 1.0;
-        utt.onend   = ()=>{ setTimeout(()=>this._next(), 300); };
-        utt.onerror = ()=>{ this.speaking=false; this._next(); };
-        this.synth.speak(utt);
+        this.speaking=true;
+        const text=this.queue.shift();
+        const utt=new SpeechSynthesisUtterance(text);
+        utt.lang   ='en-US';
+        utt.rate   =0.92;
+        utt.pitch  =1.0;
+        utt.volume =1.0;
+        utt.onend  =()=>{ setTimeout(()=>this._next(),300); };
+        utt.onerror=()=>{ this.speaking=false; this._next(); };
+        // Reclamar canal multimedia ANTES de hablar
+        // Esto iguala la prioridad de volumen con Maps/Waze en Android
+        try{
+          this._silentAudio.currentTime=0;
+          this._silentAudio.play().then(()=>{
+            this.synth.speak(utt);
+          }).catch(()=>{
+            // Si falla el audio silencioso, hablar de todas formas
+            this.synth.speak(utt);
+          });
+        }catch(e){
+          this.synth.speak(utt);
+        }
       }
     };
 
