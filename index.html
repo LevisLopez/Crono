@@ -334,6 +334,25 @@
     @keyframes dGlow{0%,100%{filter:brightness(1);}50%{filter:brightness(1.5);}}
     .data-label{font-size:clamp(7px,2vw,9px);letter-spacing:3px;color:rgba(255,255,255,0.2);margin-top:3px;}
 
+    /* ── ODOMETER ROW ── */
+    .odo-row{
+      flex-shrink:0;
+      display:flex;justify-content:space-between;align-items:center;
+      padding:4px 14px;
+      border-bottom:1px solid rgba(124,58,237,0.12);
+      background:rgba(124,58,237,0.04);
+    }
+    .odo-left{display:flex;align-items:center;gap:8px;}
+    .odo-label{font-size:clamp(7px,1.8vw,8px);letter-spacing:3px;color:rgba(255,255,255,0.2);}
+    .odo-val{font-family:'Orbitron',sans-serif;font-size:clamp(11px,3vw,13px);
+      font-weight:700;color:rgba(192,132,252,0.7);letter-spacing:1px;}
+    .odo-val.pop{animation:odoPop 0.6s ease-out;}
+    @keyframes odoPop{0%{color:#fff;text-shadow:0 0 20px rgba(192,132,252,1);}100%{color:rgba(192,132,252,0.7);}}
+    .odo-reset-hint{font-size:clamp(6px,1.5vw,7px);letter-spacing:2px;
+      color:rgba(255,255,255,0.1);cursor:pointer;padding:3px 6px;
+      border:1px solid rgba(255,255,255,0.06);border-radius:3px;transition:all 0.2s;}
+    .odo-reset-hint:active{color:rgba(255,255,255,0.4);border-color:rgba(255,255,255,0.2);}
+
     /* ── PROGRESS BAR ── */
     .prog-wrap{flex-shrink:0;padding:clamp(4px,1dvh,7px) 14px;}
     .prog-meta{display:flex;justify-content:space-between;margin-bottom:4px;}
@@ -348,7 +367,6 @@
 
     /* ── BUTTONS ── */
     .controls{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 14px 5px;}
-    .controls.paused{grid-template-columns:1fr 1fr 1fr;}
     .btn{padding:clamp(11px,2.8dvh,18px) 8px;border:none;
       font-family:'Orbitron',sans-serif;font-size:clamp(11px,3vw,14px);font-weight:700;
       letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;
@@ -360,8 +378,6 @@
     .btn-start{background:rgba(124,58,237,0.18);color:var(--vl);border:1px solid rgba(124,58,237,0.6);text-shadow:0 0 10px rgba(192,132,252,0.7);}
     .btn-pause{background:rgba(251,146,60,0.15);color:var(--fl);border:1px solid rgba(234,88,12,0.6);text-shadow:0 0 10px rgba(251,146,60,0.7);}
     .btn-reset{background:rgba(234,88,12,0.1);color:var(--fl);border:1px solid rgba(234,88,12,0.45);}
-    .btn-fin{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.45);
-      text-shadow:0 0 10px rgba(239,68,68,0.5);display:none;}
     .btn-hist{grid-column:1/-1;clip-path:none;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.08);letter-spacing:4px;}
     .btn-hist:active{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);}
 
@@ -486,6 +502,15 @@
       </div>
     </div>
 
+    <!-- ODOMETER TOTAL -->
+    <div class="odo-row">
+      <div class="odo-left">
+        <span class="odo-label">TOTAL ODO</span>
+        <span class="odo-val" id="odoVal">0.0 km</span>
+      </div>
+      <span class="odo-reset-hint" id="odoResetBtn" onclick="confirmOdoReset()">RESET ODO</span>
+    </div>
+
     <!-- PROGRESS BAR -->
     <div class="prog-wrap">
       <div class="prog-meta">
@@ -497,8 +522,7 @@
     <!-- CONTROLS -->
     <div class="controls">
       <button class="btn btn-start" id="startStop">START</button>
-      <button class="btn btn-reset" id="resetTrip">RESET KM</button>
-      <button class="btn btn-fin"   id="finViaje">⏹ FIN VIAJE</button>
+      <button class="btn btn-reset" id="resetTrip">RESET</button>
       <button class="btn btn-hist" id="toggleHistory">▼ TRIP HISTORY</button>
     </div>
 
@@ -552,6 +576,62 @@
     const GEARS=[{num:'1',name:'1ST',max:15},{num:'2',name:'2ND',max:25},{num:'3',name:'3RD',max:35},{num:'4',name:'4TH',max:45},{num:'5',name:'5TH',max:999}];
     function getGearIdx(s){if(s<=0)return null;for(let i=0;i<GEARS.length;i++)if(s<=GEARS[i].max)return i;return GEARS.length-1;}
     function isWarn(s,i){if(i<=0)return false;return s<=(GEARS[i-1].max+3)&&s>GEARS[i-1].max;}
+
+    // ══════════════════════════════════════
+    // ODOMETER TOTAL — nunca se resetea con RESET normal
+    // Solo con botón dedicado RESET ODO (doble confirmación)
+    // ══════════════════════════════════════
+    let totalOdo = parseFloat(localStorage.getItem('totalOdo')) || 0;
+    let odoConfirmPending = false;
+    let odoConfirmTimer = null;
+
+    function updateOdoDisplay(){
+      const el = document.getElementById('odoVal');
+      if(!el) return;
+      el.textContent = totalOdo >= 1000
+        ? (totalOdo/1000).toFixed(2) + ' Mkm'   // Megakm para valores muy grandes
+        : totalOdo.toFixed(1) + ' km';
+    }
+
+    function addOdoKm(km){
+      if(km <= 0) return;
+      totalOdo += km;
+      try{ localStorage.setItem('totalOdo', totalOdo.toFixed(3)); }catch(e){}
+      updateOdoDisplay();
+      // Pop animation
+      const el = document.getElementById('odoVal');
+      if(el){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+    }
+
+    function confirmOdoReset(){
+      const btn = document.getElementById('odoResetBtn');
+      if(!odoConfirmPending){
+        // Primera pulsación — pide confirmación
+        odoConfirmPending = true;
+        btn.textContent = 'CONFIRM?';
+        btn.style.color = '#ef4444';
+        btn.style.borderColor = 'rgba(239,68,68,0.4)';
+        // Auto-cancela en 3 segundos
+        odoConfirmTimer = setTimeout(()=>{
+          odoConfirmPending = false;
+          btn.textContent = 'RESET ODO';
+          btn.style.color = '';
+          btn.style.borderColor = '';
+        }, 3000);
+      } else {
+        // Segunda pulsación — ejecuta reset
+        clearTimeout(odoConfirmTimer);
+        odoConfirmPending = false;
+        totalOdo = 0;
+        try{ localStorage.setItem('totalOdo','0'); }catch(e){}
+        updateOdoDisplay();
+        btn.textContent = 'RESET ODO';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+      }
+    }
+
+    updateOdoDisplay();
 
     // ══════════════════════════════════════
     // LED SPEED LEVEL
@@ -869,18 +949,11 @@
           }
         }, {once:true});
         const btn=document.getElementById('startStop');
-        const finBtn=document.getElementById('finViaje');
-        const controls=document.querySelector('.controls');
         if(this.isRecording){
           btn.textContent='PAUSE';btn.className='btn btn-pause';
           document.getElementById('recBadge').classList.add('on');
-          finBtn.style.display='none';
-          controls.classList.remove('paused');
         } else if(this.currentTripDuration>0){
-          // Venía pausado — mostrar FIN VIAJE
           btn.textContent='RESUME';btn.className='btn btn-start';
-          finBtn.style.display='block';
-          controls.classList.add('paused');
         }
         setInterval(()=>this.saveState(),30000);
       }
@@ -888,7 +961,6 @@
       setupListeners(){
         document.getElementById('startStop').addEventListener('click',()=>this.toggleRecording());
         document.getElementById('resetTrip').addEventListener('click',()=>this.resetTrip());
-        document.getElementById('finViaje').addEventListener('click',()=>this.finViaje());
         document.getElementById('toggleHistory').addEventListener('click',()=>this.toggleHistory());
         if('wakeLock' in navigator){
           let wl=null;
@@ -949,7 +1021,10 @@
             this.lastPosition.coords.latitude,this.lastPosition.coords.longitude,
             pos.coords.latitude,pos.coords.longitude
           );
-          if(spd>0.5)this.tripDistance+=d;
+          if(spd>0.5){
+            this.tripDistance+=d;
+            addOdoKm(d); // acumula en odómetro total
+          }
         }
         this.lastPosition=pos;
         // ── Voice speed alerts ──
@@ -1074,33 +1149,26 @@
         if(!this.isTracking){this.updateStatus('WAITING FOR GPS...',true);return;}
         this.isRecording=!this.isRecording;
         const btn=document.getElementById('startStop');
-        const finBtn=document.getElementById('finViaje');
-        const controls=document.querySelector('.controls');
         const badge=document.getElementById('recBadge');
         if(this.isRecording){
-          // Si viene de START (no resume), resetear elevación
+          // START fresco: resetea elevación
           if(btn.textContent==='START') resetElevation();
           this.tripStartTime=Date.now()-this.pausedTime;
           btn.textContent='PAUSE';btn.className='btn btn-pause';
           badge.classList.add('on');this.updateStatus('RECORDING');
-          finBtn.style.display='none';
-          controls.classList.remove('paused');
           this.voiceReady=true;
           Voice.speak(`LeviSpeed started. Time is ${Voice.getTimeStr()}`);
         }else{
           this.pausedTime=Date.now()-this.tripStartTime;
           btn.textContent='RESUME';btn.className='btn btn-start';
           badge.classList.remove('on');this.updateStatus('PAUSED');
-          // Mostrar FIN VIAJE solo cuando pausado
-          finBtn.style.display='block';
-          controls.classList.add('paused');
           Voice.speak(`Ride paused. Time is ${Voice.getTimeStr()}`);
         }
         this.saveState();localStorage.setItem('isRecording',this.isRecording);
       }
 
-      finViaje(){
-        // Guarda en historial y resetea TODO incluyendo elevación
+      resetTrip(){
+        // Resetea todo — km, tiempo, maxSpeed, elevación
         if(this.tripDistance>0||this.currentTripDuration>0){
           this.history.unshift({
             date:new Date().toLocaleDateString('en-US'),
@@ -1113,40 +1181,16 @@
         this.tripDistance=0;this.maxSpeed=0;this.currentTripDuration=0;this.pausedTime=0;
         this.tripStartTime=Date.now();this.isRecording=false;this.prevGearIdx=null;
         this.accelSmooth=0;this.lastSpeedZone=0;this.lastAlertSpeed=0;this.last50km=0;
-        resetElevation(); // reset elevación completo
+        resetElevation();
         this.saveState();localStorage.setItem('isRecording',false);
         this.updateDisplay();
-        const btn=document.getElementById('startStop');
-        btn.textContent='START';btn.className='btn btn-start';
-        const finBtn=document.getElementById('finViaje');
-        finBtn.style.display='none';
-        document.querySelector('.controls').classList.remove('paused');
+        document.getElementById('startStop').textContent='START';
+        document.getElementById('startStop').className='btn btn-start';
         document.getElementById('recBadge').classList.remove('on');
         document.getElementById('tripTime').textContent='00:00';
         document.getElementById('progFill').style.width='0%';
         this.updateHistoryDisplay();
         this.updateStatus(this.isTracking?'STANDBY':'INIT GPS');
-      }
-
-      resetTrip(){
-        // SOLO resetea km, tiempo y maxSpeed — elevación intacta
-        if(this.tripDistance>0||this.currentTripDuration>0){
-          this.history.unshift({
-            date:new Date().toLocaleDateString('en-US'),
-            time:this.formatTime(this.currentTripDuration),
-            distance:this.tripDistance,maxSpeed:this.maxSpeed,
-            durationMs:this.currentTripDuration
-          });
-          this.saveHistory();
-        }
-        this.tripDistance=0;this.maxSpeed=0;this.currentTripDuration=0;this.pausedTime=0;
-        this.tripStartTime=Date.now();
-        // NO resetear elevación
-        this.saveState();
-        this.updateDisplay();
-        document.getElementById('tripTime').textContent='00:00';
-        document.getElementById('progFill').style.width='0%';
-        this.updateHistoryDisplay();
       }
 
       saveState(){
