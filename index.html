@@ -457,11 +457,10 @@
     <!-- ELEVATION PROFILE -->
     <div class="elev-section">
       <canvas id="elevCanvas" height="56"></canvas>
-      <div class="center-divider"></div>
-      <span class="elev-lbl tl">◄ PAST</span>
-      <span class="elev-lbl tr">AHEAD ►</span>
+      <div class="center-divider" style="left:75%"></div>
+      <span class="elev-lbl tl">ELEVATION</span>
       <span class="elev-lbl bl" id="elevMin"></span>
-      <span class="elev-lbl br" id="elevMax"></span>
+      <span class="elev-lbl br" id="elevMax" style="right:27%"></span>
       <div class="slope-badge flat" id="slopeBadge">── FLAT</div>
       <span class="net-indicator off" id="netIndicator">OFFLINE</span>
     </div>
@@ -572,7 +571,6 @@
 
     function updateLed(spd){
       const t=Date.now()/1000;
-      // Umbrales: 0-40 verde, 41-60 naranja, 61+ rojo, lleno a 80
       const{lc,label}=spd>60
         ?{lc:'#ef4444',label:'⚠ DANGER'}
         :spd>40
@@ -581,148 +579,180 @@
       document.getElementById('ledStatus').textContent=label;
       document.getElementById('ledStatus').style.color=lc;
       for(let c=0;c<LED_COLS;c++){
-        const wave=Math.sin(t*2+c*0.6)*0.25*(spd/80);
-        const raw=Math.min(LED_SEGS,(spd/80)*LED_SEGS+wave*ledNoise[c]*0.5);
-        const filled=Math.min(LED_SEGS,Math.max(0,Math.round(raw*ledNoise[c]*0.88)));
+        // Llenado directo: 0→80 km/h = 0→6 segs. Sin multiplicar por noise para no cortarlo.
+        const base=(spd/80)*LED_SEGS;
+        // Pequeña onda orgánica solo como efecto visual ±0.4 seg
+        const wave=Math.sin(t*2+c*0.55)*0.4*(spd/80);
+        const filled=Math.min(LED_SEGS,Math.max(0,Math.round(base+wave)));
         for(let s=0;s<LED_SEGS;s++){
           const el=document.getElementById(`ls_${c}_${s}`);
-          let cls='lseg';
-          if(s<filled){
-            // s=0,1 verde · s=2,3 naranja · s=4,5 rojo
-            if(s<=1) cls='lseg green';
-            else if(s<=3) cls='lseg orange';
-            else cls='lseg red';
-          }
-          el.className=cls;
+          // column-reverse: s=0 es fondo, s=5 es tope
+          // Verde s=0,1 · Naranja s=2,3 · Rojo s=4,5
+          el.className='lseg'+(s<filled
+            ?(s<=1?' green':s<=3?' orange':' red')
+            :'');
         }
       }
     }
 
     // ══════════════════════════════════════
-    // ELEVATION PROFILE
+    // ELEVATION PROFILE — referencia inicio viaje
     // ══════════════════════════════════════
     const elevCvs=document.getElementById('elevCanvas');
     const elevCtx=elevCvs.getContext('2d');
-    const MAX_PAST=60, MAX_FUTURE=60;
-    let pastAlt=[], futureAlt=[], isOnlineElev=false;
-    let futureTimer=0;
+    const MAX_PAST=80;
+    let pastAlt=[];
+    let tripStartAlt=null; // referencia = primer punto del viaje
+    let elevAddCounter=0;
 
     function resizeElev(){elevCvs.width=elevCvs.offsetWidth||window.innerWidth;}
     resizeElev();window.addEventListener('resize',resizeElev);
 
-    function genFuture(lastAlt, slope){
-      futureAlt=[];let a=lastAlt,sl=slope;
-      for(let i=0;i<MAX_FUTURE;i++){
-        sl+=(Math.random()-0.5)*1.2;sl=Math.max(-1.5,Math.min(1.5,sl));
-        a+=sl+Math.sin(i/MAX_FUTURE*Math.PI*3)*0.6;
-        futureAlt.push(a+(Math.random()-0.5)*1.5);
+    function addElevPoint(alt){
+      // Primer punto = referencia del viaje
+      if(tripStartAlt===null) tripStartAlt=alt;
+      // Suavizado EMA para reducir el ruido del GPS (±15-30m)
+      if(pastAlt.length>0){
+        const prev=pastAlt[pastAlt.length-1];
+        alt=prev*0.7+alt*0.3; // EMA: 70% pasado, 30% nuevo
+      }
+      elevAddCounter++;
+      // Añadir un punto cada 2 llamadas para no saturar
+      if(elevAddCounter%2===0){
+        pastAlt.push(alt);
+        if(pastAlt.length>MAX_PAST) pastAlt.shift();
       }
     }
 
-    function addElevPoint(alt){
-      pastAlt.push(alt);
-      if(pastAlt.length>MAX_PAST) pastAlt.shift();
-      futureTimer++;
-      // Si online, regenerar futuro cada 15 puntos
-      if(isOnlineElev && futureTimer>15){
-        futureTimer=0;
-        const slope=pastAlt.length>3
-          ?(pastAlt[pastAlt.length-1]-pastAlt[pastAlt.length-4])/3:0;
-        genFuture(alt,slope);
-      }
+    function resetElevation(){
+      pastAlt=[];
+      tripStartAlt=null;
+      elevAddCounter=0;
     }
 
     function drawElevation(){
       const W=elevCvs.width, H=elevCvs.height;
-      if(!W||!H||pastAlt.length<2) return;
+      if(!W||!H) return;
+
       elevCtx.clearRect(0,0,W,H);
-      const halfW=W/2;
+
+      // Posición del punto "ahora" al 75% del ancho
+      const dotX=W*0.75;
+      const rightW=W*0.25;
+
+      // Si no hay datos aún, dibujar estado vacío
+      if(pastAlt.length<2){
+        elevCtx.fillStyle='rgba(255,255,255,0.04)';
+        elevCtx.font='8px Share Tech Mono';
+        elevCtx.fillText('WAITING GPS...',10,H/2+3);
+        return;
+      }
+
       const curAlt=pastAlt[pastAlt.length-1];
+      const ref=tripStartAlt||curAlt;
 
-      // Escala global
-      const allPts=[...pastAlt,...(isOnlineElev&&futureAlt.length?futureAlt:[curAlt])];
-      const minA=Math.min(...allPts)-6, maxA=Math.max(...allPts)+6;
+      // Escala relativa al inicio: centrada en el punto de partida
+      const diffs=pastAlt.map(a=>a-ref);
+      const minD=Math.min(...diffs)-15;
+      const maxD=Math.max(...diffs)+15;
+      const absMax=Math.max(Math.abs(minD),Math.abs(maxD),30);
+      const minA=ref-absMax, maxA=ref+absMax;
       const range=maxA-minA||1;
-      const yOf=a=>H-6-((a-minA)/range)*(H-14);
+      const yOf=a=>H-5-((a-minA)/range)*(H-12);
 
-      // ── Historial izquierdo ──
+      // ── Línea de referencia (inicio del viaje) ──
+      const refY=yOf(ref);
+      elevCtx.beginPath();elevCtx.moveTo(0,refY);elevCtx.lineTo(dotX-2,refY);
+      elevCtx.strokeStyle='rgba(251,146,60,0.18)';elevCtx.lineWidth=1;
+      elevCtx.setLineDash([3,5]);elevCtx.stroke();elevCtx.setLineDash([]);
+
+      // ── Área rellena historial (izquierda hasta 75%) ──
       elevCtx.beginPath();
       elevCtx.moveTo(0,H);
       pastAlt.forEach((a,i)=>{
-        elevCtx.lineTo((i/(pastAlt.length-1))*(halfW-2), yOf(a));
+        elevCtx.lineTo((i/(pastAlt.length-1))*dotX, yOf(a));
       });
-      elevCtx.lineTo(halfW-2,H);elevCtx.closePath();
+      elevCtx.lineTo(dotX,H);elevCtx.closePath();
       const gL=elevCtx.createLinearGradient(0,0,0,H);
-      gL.addColorStop(0,'rgba(124,58,237,0.3)');gL.addColorStop(1,'rgba(124,58,237,0)');
+      gL.addColorStop(0,'rgba(124,58,237,0.28)');
+      gL.addColorStop(1,'rgba(124,58,237,0)');
       elevCtx.fillStyle=gL;elevCtx.fill();
 
+      // ── Línea del perfil ──
       elevCtx.beginPath();
       pastAlt.forEach((a,i)=>{
-        const x=(i/(pastAlt.length-1))*(halfW-2);
+        const x=(i/(pastAlt.length-1))*dotX;
         i===0?elevCtx.moveTo(x,yOf(a)):elevCtx.lineTo(x,yOf(a));
       });
-      elevCtx.strokeStyle='rgba(192,132,252,0.8)';elevCtx.lineWidth=1.8;
-      elevCtx.shadowBlur=5;elevCtx.shadowColor='rgba(192,132,252,0.4)';
+      elevCtx.strokeStyle='rgba(192,132,252,0.85)';
+      elevCtx.lineWidth=1.8;elevCtx.shadowBlur=5;
+      elevCtx.shadowColor='rgba(192,132,252,0.4)';
       elevCtx.stroke();elevCtx.shadowBlur=0;
 
-      // ── Lado derecho ──
-      const posY=yOf(curAlt);
-      if(isOnlineElev && futureAlt.length>0){
-        elevCtx.beginPath();
-        elevCtx.moveTo(halfW+2,H);
-        futureAlt.forEach((a,i)=>{
-          elevCtx.lineTo(halfW+2+(i/(futureAlt.length-1))*(halfW-4), yOf(a));
-        });
-        elevCtx.lineTo(W,H);elevCtx.closePath();
-        const gR=elevCtx.createLinearGradient(halfW,0,W,0);
-        gR.addColorStop(0,'rgba(74,222,128,0.18)');gR.addColorStop(1,'rgba(74,222,128,0.02)');
-        elevCtx.fillStyle=gR;elevCtx.fill();
+      // ── Zona derecha oscura con datos de altitud ──
+      // (el CSS del alt-panel lo cubre, pero dibujamos el fondo)
+      elevCtx.fillStyle='rgba(0,0,0,0.45)';
+      elevCtx.fillRect(dotX+1,0,rightW,H);
 
-        elevCtx.beginPath();
-        futureAlt.forEach((a,i)=>{
-          const x=halfW+2+(i/(futureAlt.length-1))*(halfW-4);
-          i===0?elevCtx.moveTo(x,yOf(a)):elevCtx.lineTo(x,yOf(a));
-        });
-        const lg=elevCtx.createLinearGradient(halfW,0,W,0);
-        lg.addColorStop(0,'rgba(74,222,128,0.9)');lg.addColorStop(1,'rgba(74,222,128,0.1)');
-        elevCtx.strokeStyle=lg;elevCtx.lineWidth=1.5;elevCtx.setLineDash([4,3]);
-        elevCtx.shadowBlur=5;elevCtx.shadowColor='rgba(74,222,128,0.4)';
-        elevCtx.stroke();elevCtx.shadowBlur=0;elevCtx.setLineDash([]);
-      } else {
-        // Offline — punteada gris desvanecida
-        for(let x=halfW+6;x<W-12;x+=9){
-          const alpha=0.22*(1-((x-halfW)/halfW)*0.9);
-          elevCtx.beginPath();elevCtx.moveTo(x,posY);elevCtx.lineTo(x+4,posY);
-          elevCtx.strokeStyle=`rgba(255,255,255,${alpha})`;elevCtx.lineWidth=1.2;elevCtx.stroke();
-        }
-        elevCtx.fillStyle='rgba(255,255,255,0.1)';
-        elevCtx.font='9px Orbitron,monospace';
-        elevCtx.fillText('?',W-13,posY+4);
+      // ── Punteada gris desde punto hacia la derecha ──
+      const posY=yOf(curAlt);
+      for(let x=dotX+6;x<W-10;x+=8){
+        const prog=(x-dotX)/rightW;
+        const alpha=0.2*(1-prog*0.85);
+        elevCtx.beginPath();elevCtx.moveTo(x,posY);elevCtx.lineTo(x+4,posY);
+        elevCtx.strokeStyle=`rgba(255,255,255,${alpha})`;
+        elevCtx.lineWidth=1;elevCtx.stroke();
       }
 
-      // ── Punto posición actual (centro) ──
+      // ── Cuadrícula suave (solo zona izquierda) ──
+      elevCtx.setLineDash([2,6]);elevCtx.strokeStyle='rgba(255,255,255,0.03)';elevCtx.lineWidth=1;
+      [H*0.33,H*0.66].forEach(y=>{
+        elevCtx.beginPath();elevCtx.moveTo(0,y);elevCtx.lineTo(dotX,y);elevCtx.stroke();
+      });
+      elevCtx.setLineDash([]);
+
+      // ── Punto posición actual al 75% ──
       const pulse=0.5+0.5*Math.sin(Date.now()/280);
-      elevCtx.beginPath();elevCtx.arc(halfW,posY,8,0,Math.PI*2);
-      elevCtx.fillStyle=`rgba(255,255,255,${0.04+pulse*0.05})`;elevCtx.fill();
-      elevCtx.beginPath();elevCtx.arc(halfW,posY,5,0,Math.PI*2);
-      elevCtx.fillStyle=`rgba(251,146,60,${0.35+pulse*0.4})`;
-      elevCtx.shadowBlur=8;elevCtx.shadowColor='rgba(251,146,60,0.6)';elevCtx.fill();
-      elevCtx.beginPath();elevCtx.arc(halfW,posY,2.5,0,Math.PI*2);
-      elevCtx.fillStyle='#fff';elevCtx.shadowBlur=10;elevCtx.shadowColor='rgba(255,255,255,1)';
+      elevCtx.beginPath();elevCtx.arc(dotX,posY,9,0,Math.PI*2);
+      elevCtx.fillStyle=`rgba(255,255,255,${0.03+pulse*0.05})`;elevCtx.fill();
+      elevCtx.beginPath();elevCtx.arc(dotX,posY,5.5,0,Math.PI*2);
+      elevCtx.fillStyle=`rgba(251,146,60,${0.3+pulse*0.4})`;
+      elevCtx.shadowBlur=8;elevCtx.shadowColor='rgba(251,146,60,0.6)';
       elevCtx.fill();elevCtx.shadowBlur=0;
-      // Línea al suelo
-      elevCtx.beginPath();elevCtx.moveTo(halfW,posY+4);elevCtx.lineTo(halfW,H-2);
+      elevCtx.beginPath();elevCtx.arc(dotX,posY,2.5,0,Math.PI*2);
+      elevCtx.fillStyle='#fff';elevCtx.shadowBlur=10;
+      elevCtx.shadowColor='rgba(255,255,255,1)';elevCtx.fill();elevCtx.shadowBlur=0;
+      // Línea punteada al suelo
+      elevCtx.beginPath();elevCtx.moveTo(dotX,posY+4);elevCtx.lineTo(dotX,H-2);
       elevCtx.strokeStyle='rgba(255,255,255,0.1)';elevCtx.lineWidth=1;
       elevCtx.setLineDash([2,3]);elevCtx.stroke();elevCtx.setLineDash([]);
 
-      // ── Cuadrícula ──
-      elevCtx.setLineDash([2,6]);elevCtx.strokeStyle='rgba(255,255,255,0.03)';elevCtx.lineWidth=1;
-      [H/3,H*2/3].forEach(y=>{elevCtx.beginPath();elevCtx.moveTo(0,y);elevCtx.lineTo(W,y);elevCtx.stroke();});
-      elevCtx.setLineDash([]);
+      // ── Panel derecho: datos de altitud ──
+      const diffFromStart=Math.round(curAlt-(tripStartAlt||curAlt));
+      const absAlt=Math.round(curAlt);
+      // Altitud absoluta
+      elevCtx.font='bold 13px Orbitron,monospace';
+      elevCtx.textAlign='center';
+      const panelCX=dotX+rightW/2;
+      elevCtx.fillStyle=diffFromStart>5?'rgba(251,146,60,0.9)':diffFromStart<-5?'rgba(74,222,128,0.9)':'rgba(255,255,255,0.7)';
+      elevCtx.fillText(absAlt,panelCX,H*0.38);
+      elevCtx.font='7px Share Tech Mono';
+      elevCtx.fillStyle='rgba(255,255,255,0.2)';
+      elevCtx.fillText('msnm',panelCX,H*0.38+12);
+      // Diferencia desde inicio
+      const diffStr=(diffFromStart>=0?'+':'')+diffFromStart+'m';
+      elevCtx.font='bold 10px Orbitron,monospace';
+      elevCtx.fillStyle=diffFromStart>5?'rgba(251,146,60,0.8)':diffFromStart<-5?'rgba(74,222,128,0.8)':'rgba(255,255,255,0.25)';
+      elevCtx.fillText(diffStr,panelCX,H*0.72);
+      elevCtx.font='6px Share Tech Mono';
+      elevCtx.fillStyle='rgba(255,255,255,0.15)';
+      elevCtx.fillText('vs inicio',panelCX,H*0.72+10);
+      elevCtx.textAlign='left';
 
       // ── Min/Max labels ──
-      document.getElementById('elevMin').textContent=Math.round(minA+6)+'m';
-      document.getElementById('elevMax').textContent=Math.round(maxA-6)+'m';
+      const allDiffs=pastAlt.map(a=>a-ref);
+      document.getElementById('elevMin').textContent='▼ '+(Math.round(Math.min(...allDiffs)))+'m';
+      document.getElementById('elevMax').textContent='▲ +'+(Math.round(Math.max(...allDiffs)))+'m';
 
       // ── Pendiente ──
       if(pastAlt.length>=10){
@@ -730,25 +760,24 @@
         const ao=pastAlt.slice(-10,-5).reduce((a,b)=>a+b,0)/5;
         const diff=ar-ao;
         const badge=document.getElementById('slopeBadge');
-        if(diff>2){badge.textContent='▲ UPHILL';badge.className='slope-badge up';}
-        else if(diff<-2){badge.textContent='▼ DOWNHILL';badge.className='slope-badge down';}
+        if(diff>1.5){badge.textContent='▲ UPHILL';badge.className='slope-badge up';}
+        else if(diff<-1.5){badge.textContent='▼ DOWNHILL';badge.className='slope-badge down';}
         else{badge.textContent='── FLAT';badge.className='slope-badge flat';}
       }
     }
 
-    // Verificar conectividad cada 10 segundos
+    // Verificar conectividad
     function checkOnline(){
-      isOnlineElev=navigator.onLine;
       const ni=document.getElementById('netIndicator');
-      ni.textContent=isOnlineElev?'ONLINE':'OFFLINE';
-      ni.className='net-indicator '+(isOnlineElev?'on':'off');
+      ni.textContent=navigator.onLine?'ONLINE':'OFFLINE';
+      ni.className='net-indicator '+(navigator.onLine?'on':'off');
     }
     checkOnline();
     window.addEventListener('online',checkOnline);
     window.addEventListener('offline',checkOnline);
-    setInterval(checkOnline,10000);
+    setInterval(checkOnline,15000);
 
-    // Loop de elevación (independiente del GPS, 30fps)
+    // Loop elevación 30fps
     setInterval(()=>{ drawElevation(); }, 33);
 
     // ══════════════════════════════════════
@@ -989,15 +1018,8 @@
         document.getElementById('progFill').style.width=Math.min((this.currentSpeed/200)*100,100)+'%';
         document.getElementById('progLabel').textContent=spd+' km/h';
 
-        // Accel blocks (suavizado)
-        const vEl=document.getElementById('accelVal');
-        if(Math.abs(this.accelSmooth)>0.8){
-          vEl.textContent=(this.accelSmooth>0?'+':'')+this.accelSmooth.toFixed(1)+' km/h·s';
-          vEl.className='accel-value '+(this.accelSmooth>0?'pos':'neg');
-        }else{
-          vEl.textContent='0.0 km/h·s';vEl.className='accel-value zero';
-        }
-        updateAccelBlocks(this.accelSmooth);
+        // LED speed level
+        updateLed(spd);
 
         // Gear
         const gIdx=getGearIdx(this.currentSpeed);
@@ -1066,6 +1088,7 @@
         this.tripDistance=0;this.maxSpeed=0;this.currentTripDuration=0;this.pausedTime=0;
         this.tripStartTime=Date.now();this.isRecording=false;this.prevGearIdx=null;
         this.accelSmooth=0;
+        resetElevation(); // reset elevation profile reference
         this.saveState();localStorage.setItem('isRecording',false);
         this.updateDisplay();
         document.getElementById('startStop').textContent='START';
