@@ -24,7 +24,64 @@
       height:100vh;height:100dvh;
       overflow:hidden;position:fixed;
       top:0;left:0;right:0;bottom:0;
+      transition:background 0.8s,color 0.8s;
     }
+
+    /* ── MODO DÍA — alto contraste para sol directo ── */
+    body.day-mode{background:#e8edf4;color:#0a0a0a;}
+    body.day-mode::before{
+      background-image:
+        linear-gradient(rgba(0,0,0,0.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(0,0,0,0.04) 1px,transparent 1px);
+    }
+    body.day-mode::after{
+      background:
+        radial-gradient(ellipse at 15% 10%,rgba(109,40,217,0.08) 0%,transparent 45%),
+        radial-gradient(ellipse at 85% 90%,rgba(194,65,12,0.06) 0%,transparent 45%);
+    }
+    body.day-mode .app{background:#e8edf4;}
+    body.day-mode .hdr{background:rgba(109,40,217,0.08);border-color:rgba(109,40,217,0.2);}
+    body.day-mode .logo{background:linear-gradient(135deg,#5b21b6,#9a3412);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    body.day-mode #speedNum{color:#0a0a0a;text-shadow:none;}
+    body.day-mode .spd-cell{border-color:rgba(0,0,0,0.08);}
+    body.day-mode .right-cells .time-c{border-color:rgba(0,0,0,0.08);}
+    body.day-mode #clockVal{color:#0a0a0a;text-shadow:none;}
+    body.day-mode #clockSecs{color:rgba(0,0,0,0.35);}
+    body.day-mode .gear-badge{background:rgba(109,40,217,0.1);border-color:#5b21b6;}
+    body.day-mode #gearNum{color:#5b21b6;}
+    body.day-mode #gearName{color:rgba(0,0,0,0.4);}
+    body.day-mode #altVal{color:#15803d;text-shadow:none;}
+    body.day-mode .speed-alert-bar.warn60{background:rgba(194,65,12,0.15);color:#9a3412;}
+    body.day-mode .speed-alert-bar.warn80{background:rgba(185,28,28,0.15);color:#991b1b;}
+    body.day-mode .led-section{border-color:rgba(0,0,0,0.06);}
+    body.day-mode .led-lbl{color:rgba(0,0,0,0.3);}
+    body.day-mode .lseg{background:rgba(0,0,0,0.06);border-color:rgba(0,0,0,0.1);}
+    body.day-mode .lseg.green{background:#15803d;box-shadow:none;border-color:#15803d;}
+    body.day-mode .lseg.orange{background:#c2410c;box-shadow:none;border-color:#c2410c;}
+    body.day-mode .lseg.red{background:#dc2626;box-shadow:none;border-color:#dc2626;}
+    body.day-mode .elev-section{background:#dce3ed;}
+    body.day-mode .data-row{background:linear-gradient(90deg,rgba(109,40,217,0.04),rgba(194,65,12,0.04));border-color:rgba(0,0,0,0.08);}
+    body.day-mode .data-div{background:rgba(0,0,0,0.06);}
+    body.day-mode #tripDistance{color:#5b21b6;}
+    body.day-mode #tripTime{color:#0a0a0a;}
+    body.day-mode #maxSpeed{color:#9a3412;}
+    body.day-mode .data-label{color:rgba(0,0,0,0.3);}
+    body.day-mode .odo-row{background:rgba(109,40,217,0.05);border-color:rgba(109,40,217,0.15);}
+    body.day-mode .odo-label{color:rgba(0,0,0,0.3);}
+    body.day-mode .odo-val{color:#5b21b6;text-shadow:none;}
+    body.day-mode .odo-unit{color:rgba(91,33,182,0.5);}
+    body.day-mode .odo-reset-hint{color:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.1);}
+    body.day-mode .prog-track{background:rgba(0,0,0,0.08);}
+    body.day-mode .prog-meta span{color:rgba(0,0,0,0.25);}
+    body.day-mode .btn-start{background:rgba(109,40,217,0.12);color:#5b21b6;border-color:rgba(109,40,217,0.5);}
+    body.day-mode .btn-pause{background:rgba(194,65,12,0.12);color:#9a3412;border-color:rgba(194,65,12,0.5);}
+    body.day-mode .btn-reset{background:rgba(194,65,12,0.08);color:#9a3412;border-color:rgba(194,65,12,0.3);}
+    body.day-mode .btn-finish{background:rgba(185,28,28,0.1);color:#991b1b;border-color:rgba(185,28,28,0.4);}
+    body.day-mode .btn-hist{background:rgba(0,0,0,0.04);color:rgba(0,0,0,0.3);border-color:rgba(0,0,0,0.1);}
+    body.day-mode .status{color:rgba(0,0,0,0.3);}
+    body.day-mode #recBadge{color:rgba(0,0,0,0.25);}
+    body.day-mode #recBadge.on{color:#15803d;}
+    body.day-mode .radar-wrap,.day-mode .flames{opacity:0;}
     body::before{
       content:'';position:fixed;inset:0;
       background-image:
@@ -384,6 +441,11 @@
     .btn-start{background:rgba(124,58,237,0.18);color:var(--vl);border:1px solid rgba(124,58,237,0.6);text-shadow:0 0 10px rgba(192,132,252,0.7);}
     .btn-pause{background:rgba(251,146,60,0.15);color:var(--fl);border:1px solid rgba(234,88,12,0.6);text-shadow:0 0 10px rgba(251,146,60,0.7);}
     .btn-reset{background:rgba(234,88,12,0.1);color:var(--fl);border:1px solid rgba(234,88,12,0.45);}
+    .btn-finish{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.4);
+      text-shadow:0 0 8px rgba(239,68,68,0.5);display:none;}
+    .controls.paused{grid-template-columns:1fr 1fr 1fr;}
+    .controls.paused .btn-finish{display:block;}
+    .controls.paused .btn-reset{display:none;}
     .btn-hist{grid-column:1/-1;clip-path:none;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.08);letter-spacing:4px;}
     .btn-hist:active{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);}
 
@@ -527,15 +589,16 @@
     </div>
 
     <!-- CONTROLS -->
-    <div class="controls">
-      <button class="btn btn-start" id="startStop">START</button>
-      <button class="btn btn-reset" id="resetTrip">RESET</button>
-      <button class="btn btn-hist" id="toggleHistory">▼ TRIP HISTORY</button>
+    <div class="controls" id="controls">
+      <button class="btn btn-start"  id="startStop">START</button>
+      <button class="btn btn-reset"  id="resetTrip">RESET</button>
+      <button class="btn btn-finish" id="finishTrip">FINISH</button>
+      <button class="btn btn-hist"   id="toggleHistory">▼ TRIP HISTORY</button>
     </div>
 
     <div class="mock-footer" style="text-align:center;font-size:6px;letter-spacing:3px;
       color:rgba(255,255,255,0.08);padding:3px 0;border-top:1px solid rgba(124,58,237,0.08);">
-      LEVISPEED v20
+      LEVISPEED v22
     </div>
 
     <!-- HISTORY -->
@@ -575,7 +638,16 @@
     }
     drawPts();
 
-    // ── Clock ──
+    // ── Auto modo día/noche por hora ──
+    // 6am-6pm = día, resto = noche. Sin sensores, sin botones.
+    function applyDayNight(){
+      const h=new Date().getHours();
+      const isDay=h>=6&&h<18;
+      document.documentElement.setAttribute('data-theme',isDay?'day':'night');
+      document.body.classList.toggle('day-mode',isDay);
+    }
+    applyDayNight();
+    setInterval(applyDayNight,60000); // revisar cada minuto
     function updateClock(){
       const now=new Date();
       document.getElementById('clockVal').textContent=
@@ -1006,6 +1078,7 @@
       setupListeners(){
         document.getElementById('startStop').addEventListener('click',()=>this.toggleRecording());
         document.getElementById('resetTrip').addEventListener('click',()=>this.resetTrip());
+        document.getElementById('finishTrip').addEventListener('click',()=>this.finishTrip());
         document.getElementById('toggleHistory').addEventListener('click',()=>this.toggleHistory());
         if('wakeLock' in navigator){
           let wl=null;
@@ -1195,25 +1268,31 @@
         this.isRecording=!this.isRecording;
         const btn=document.getElementById('startStop');
         const badge=document.getElementById('recBadge');
+        const controls=document.getElementById('controls');
         if(this.isRecording){
           // START fresco: resetea elevación
           if(btn.textContent==='START') resetElevation();
           this.tripStartTime=Date.now()-this.pausedTime;
           btn.textContent='PAUSE';btn.className='btn btn-pause';
           badge.classList.add('on');this.updateStatus('RECORDING');
+          controls.classList.remove('paused');
           this.voiceReady=true;
           Voice.speak(`LeviSpeed started. Time is ${Voice.getTimeStr()}`);
         }else{
           this.pausedTime=Date.now()-this.tripStartTime;
           btn.textContent='CONTINUE';btn.className='btn btn-start';
           badge.classList.remove('on');this.updateStatus('PAUSED');
+          // Mostrar FINISH, ocultar RESET cuando pausado
+          controls.classList.add('paused');
           Voice.speak(`Ride paused. Time is ${Voice.getTimeStr()}`);
         }
         this.saveState();localStorage.setItem('isRecording',this.isRecording);
       }
 
-      resetTrip(){
-        // Resetea todo — km, tiempo, maxSpeed, elevación
+      finishTrip(){
+        // Congela elevación, guarda en historial, resetea contadores
+        // La línea de elevación queda visible hasta el próximo START
+        const controls=document.getElementById('controls');
         if(this.tripDistance>0||this.currentTripDuration>0){
           this.history.unshift({
             date:new Date().toLocaleDateString('en-US'),
@@ -1226,7 +1305,7 @@
         this.tripDistance=0;this.maxSpeed=0;this.currentTripDuration=0;this.pausedTime=0;
         this.tripStartTime=Date.now();this.isRecording=false;this.prevGearIdx=null;
         this.accelSmooth=0;this.lastSpeedZone=0;this.lastAlertSpeed=0;this.last50km=0;
-        resetElevation();
+        // NO resetear elevación — queda congelada mostrando el recorrido completo
         this.saveState();localStorage.setItem('isRecording',false);
         this.updateDisplay();
         document.getElementById('startStop').textContent='START';
@@ -1234,8 +1313,33 @@
         document.getElementById('recBadge').classList.remove('on');
         document.getElementById('tripTime').textContent='00:00';
         document.getElementById('progFill').style.width='0%';
+        controls.classList.remove('paused');
         this.updateHistoryDisplay();
         this.updateStatus(this.isTracking?'STANDBY':'INIT GPS');
+      }
+
+      resetTrip(){
+        // RESET — solo funciona cuando NO está grabando (estado STANDBY/FINISH)
+        // Resetea km, tiempo, maxSpeed Y elevación para viaje nuevo
+        if(this.isRecording) return; // protección: no resetear mientras graba
+        if(this.tripDistance>0||this.currentTripDuration>0){
+          this.history.unshift({
+            date:new Date().toLocaleDateString('en-US'),
+            time:this.formatTime(this.currentTripDuration),
+            distance:this.tripDistance,maxSpeed:this.maxSpeed,
+            durationMs:this.currentTripDuration
+          });
+          this.saveHistory();
+        }
+        this.tripDistance=0;this.maxSpeed=0;this.currentTripDuration=0;this.pausedTime=0;
+        this.tripStartTime=Date.now();this.prevGearIdx=null;
+        this.accelSmooth=0;this.lastSpeedZone=0;this.lastAlertSpeed=0;this.last50km=0;
+        resetElevation();
+        this.saveState();
+        this.updateDisplay();
+        document.getElementById('tripTime').textContent='00:00';
+        document.getElementById('progFill').style.width='0%';
+        this.updateHistoryDisplay();
       }
 
       saveState(){
