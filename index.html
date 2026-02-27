@@ -353,7 +353,7 @@
     }
     .odo-val.pop{animation:odoPop 0.6s ease-out;}
     @keyframes odoPop{0%{color:#fff;text-shadow:0 0 30px rgba(192,132,252,1),0 0 60px rgba(192,132,252,0.5);}100%{color:var(--vl);text-shadow:0 0 12px rgba(192,132,252,0.6);}}
-    .odo-unit{font-size:clamp(7px,1.8vw,9px);letter-spacing:3px;color:rgba(255,255,255,0.2);margin-left:2px;}
+    .odo-unit{font-family:'Orbitron',sans-serif;font-size:clamp(11px,3vw,3.5dvh);font-weight:700;letter-spacing:2px;color:rgba(192,132,252,0.5);margin-left:2px;}
     .odo-reset-hint{font-size:clamp(6px,1.5vw,7px);letter-spacing:2px;
       color:rgba(255,255,255,0.15);cursor:pointer;padding:4px 8px;
       border:1px solid rgba(255,255,255,0.1);border-radius:3px;transition:all 0.2s;}
@@ -690,32 +690,40 @@
     }
 
     // ══════════════════════════════════════
-    // ELEVATION PROFILE — referencia inicio viaje
+    // ELEVATION PROFILE — todo el viaje completo
     // ══════════════════════════════════════
     const elevCvs=document.getElementById('elevCanvas');
     const elevCtx=elevCvs.getContext('2d');
-    const MAX_PAST=80;
     let pastAlt=[];
-    let tripStartAlt=null; // referencia = primer punto del viaje
+    let tripStartAlt=null;
     let elevAddCounter=0;
 
     function resizeElev(){elevCvs.width=elevCvs.offsetWidth||window.innerWidth;}
     resizeElev();window.addEventListener('resize',resizeElev);
 
+    function compressAlt(){
+      // Cuando hay muchos puntos, comprimir quitando uno de cada dos del historial viejo
+      // Conservar siempre los últimos 40 puntos intactos para precisión reciente
+      const keepRecent=40;
+      if(pastAlt.length<=keepRecent) return;
+      const old=pastAlt.slice(0,pastAlt.length-keepRecent);
+      const compressed=old.filter((_,i)=>i%2===0);
+      pastAlt=[...compressed,...pastAlt.slice(-keepRecent)];
+    }
+
     function addElevPoint(alt){
-      // Primer punto = referencia del viaje
       if(tripStartAlt===null) tripStartAlt=alt;
-      // Suavizado EMA para reducir el ruido del GPS (±15-30m)
+      // Suavizado EMA para reducir ruido GPS
       if(pastAlt.length>0){
         const prev=pastAlt[pastAlt.length-1];
-        alt=prev*0.7+alt*0.3; // EMA: 70% pasado, 30% nuevo
+        alt=prev*0.7+alt*0.3;
       }
       elevAddCounter++;
-      // Añadir un punto cada 2 llamadas para no saturar
-      if(elevAddCounter%2===0){
-        pastAlt.push(alt);
-        if(pastAlt.length>MAX_PAST) pastAlt.shift();
-      }
+      // Un punto cada 2 llamadas GPS (~cada 2-3 segundos)
+      if(elevAddCounter%2!==0) return;
+      pastAlt.push(alt);
+      // Comprimir si supera 500 puntos — guarda memoria sin perder el recorrido
+      if(pastAlt.length>500) compressAlt();
     }
 
     function resetElevation(){
@@ -981,8 +989,16 @@
         if(this.isRecording){
           btn.textContent='PAUSE';btn.className='btn btn-pause';
           document.getElementById('recBadge').classList.add('on');
-        } else if(this.currentTripDuration>0){
-          btn.textContent='RESUME';btn.className='btn btn-start';
+        } else {
+          // Siempre START al abrir la app — nunca CONTINUE
+          btn.textContent='START';btn.className='btn btn-start';
+          // Si había viaje en curso, resetearlo al abrir
+          if(this.currentTripDuration>0){
+            this.tripDistance=0;this.maxSpeed=0;
+            this.currentTripDuration=0;this.pausedTime=0;
+            resetElevation();
+            this.saveState();
+          }
         }
         setInterval(()=>this.saveState(),30000);
       }
@@ -1189,7 +1205,7 @@
           Voice.speak(`LeviSpeed started. Time is ${Voice.getTimeStr()}`);
         }else{
           this.pausedTime=Date.now()-this.tripStartTime;
-          btn.textContent='RESUME';btn.className='btn btn-start';
+          btn.textContent='CONTINUE';btn.className='btn btn-start';
           badge.classList.remove('on');this.updateStatus('PAUSED');
           Voice.speak(`Ride paused. Time is ${Voice.getTimeStr()}`);
         }
