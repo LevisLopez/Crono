@@ -598,7 +598,7 @@
 
     <div class="mock-footer" style="text-align:center;font-size:6px;letter-spacing:3px;
       color:rgba(255,255,255,0.08);padding:3px 0;border-top:1px solid rgba(124,58,237,0.08);">
-      LEVISPEED v22
+      LEVISPEED v24
     </div>
 
     <!-- HISTORY -->
@@ -742,18 +742,22 @@
     }
     buildLedGrid();
 
+    let ledFilled=Array(14).fill(0); // suavizado por columna
+
     function updateLed(spd){
       const t=Date.now()/1000;
+      const target=(spd/80)*LED_SEGS; // 0-6 segmentos según velocidad
       for(let c=0;c<LED_COLS;c++){
-        // Llenado directo: 0→80 km/h = 0→6 segs. Sin multiplicar por noise para no cortarlo.
-        const base=(spd/80)*LED_SEGS;
-        // Pequeña onda orgánica solo como efecto visual ±0.4 seg
-        const wave=Math.sin(t*2+c*0.55)*0.4*(spd/80);
-        const filled=Math.min(LED_SEGS,Math.max(0,Math.round(base+wave)));
+        // Onda muy suave solo para efecto orgánico — máximo ±0.3 seg
+        const wave=Math.sin(t*1.5+c*0.5)*0.3*(Math.min(spd,80)/80);
+        const targetC=Math.min(LED_SEGS,Math.max(0,target+wave));
+        // Suavizado EMA por columna: evita saltos bruscos de color
+        ledFilled[c]=ledFilled[c]*0.75+targetC*0.25;
+        const filled=Math.round(ledFilled[c]);
         for(let s=0;s<LED_SEGS;s++){
           const el=document.getElementById(`ls_${c}_${s}`);
-          // column-reverse: s=0 es fondo, s=5 es tope
-          // Verde s=0,1 · Naranja s=2,3 · Rojo s=4,5
+          // column-reverse: s=0 fondo → s=5 tope
+          // s=0,1 verde (0-40km/h) · s=2,3 naranja (41-60) · s=4,5 rojo (61+)
           el.className='lseg'+(s<filled
             ?(s<=1?' green':s<=3?' orange':' red')
             :'');
@@ -762,91 +766,135 @@
     }
 
     // ══════════════════════════════════════
-    // ELEVATION PROFILE — todo el viaje completo
+    // ELEVATION — ventana 3 min, historial completo, swipe
     // ══════════════════════════════════════
     const elevCvs=document.getElementById('elevCanvas');
     const elevCtx=elevCvs.getContext('2d');
-    let pastAlt=[];
+
+    // Historial completo del viaje (timestamp + altitud)
+    let elevHistory=[]; // [{t: ms, a: metros}]
     let tripStartAlt=null;
     let elevAddCounter=0;
+
+    // Estado del swipe
+    const WINDOW_MS=3*60*1000; // 3 minutos visible
+    let viewOffsetMs=0;        // 0 = "ahora", positivo = más al pasado
+    let isSwipeMode=false;     // true cuando el usuario está explorando
+    let swipeStartX=0, swipeStartOffset=0;
+    let swipeReturnTimer=null;
 
     function resizeElev(){elevCvs.width=elevCvs.offsetWidth||window.innerWidth;}
     resizeElev();window.addEventListener('resize',resizeElev);
 
-    function compressAlt(){
-      // Cuando hay muchos puntos, comprimir quitando uno de cada dos del historial viejo
-      // Conservar siempre los últimos 40 puntos intactos para precisión reciente
-      const keepRecent=40;
-      if(pastAlt.length<=keepRecent) return;
-      const old=pastAlt.slice(0,pastAlt.length-keepRecent);
-      const compressed=old.filter((_,i)=>i%2===0);
-      pastAlt=[...compressed,...pastAlt.slice(-keepRecent)];
-    }
-
     function addElevPoint(alt){
       if(tripStartAlt===null) tripStartAlt=alt;
-      // Suavizado EMA para reducir ruido GPS
-      if(pastAlt.length>0){
-        const prev=pastAlt[pastAlt.length-1];
+      // Suavizado EMA
+      if(elevHistory.length>0){
+        const prev=elevHistory[elevHistory.length-1].a;
         alt=prev*0.7+alt*0.3;
       }
       elevAddCounter++;
-      // Un punto cada 2 llamadas GPS (~cada 2-3 segundos)
-      if(elevAddCounter%2!==0) return;
-      pastAlt.push(alt);
-      // Comprimir si supera 500 puntos — guarda memoria sin perder el recorrido
-      if(pastAlt.length>500) compressAlt();
+      if(elevAddCounter%2!==0) return; // un punto cada ~3s
+      elevHistory.push({t:Date.now(), a:alt});
+      // Sin límite — guardamos todo el viaje
+      // Máximo 2000 puntos (~100 minutos) luego comprime
+      if(elevHistory.length>2000){
+        const half=elevHistory.slice(0,1000).filter((_,i)=>i%2===0);
+        elevHistory=[...half,...elevHistory.slice(1000)];
+      }
     }
 
     function resetElevation(){
-      pastAlt=[];
+      elevHistory=[];
       tripStartAlt=null;
       elevAddCounter=0;
+      viewOffsetMs=0;
+      isSwipeMode=false;
     }
+
+    // ── Swipe handlers ──
+    elevCvs.addEventListener('touchstart',e=>{
+      swipeStartX=e.touches[0].clientX;
+      swipeStartOffset=viewOffsetMs;
+      clearTimeout(swipeReturnTimer);
+    },{passive:true});
+
+    elevCvs.addEventListener('touchmove',e=>{
+      const dx=e.touches[0].clientX-swipeStartX;
+      const W=elevCvs.width||320;
+      // Cada px de swipe = WINDOW_MS/W milisegundos
+      const dtMs=(dx/W)*WINDOW_MS*2;
+      viewOffsetMs=Math.max(0,swipeStartOffset-dtMs);
+      // No ir más allá del inicio del viaje
+      if(elevHistory.length>0){
+        const oldest=Date.now()-elevHistory[0].t;
+        viewOffsetMs=Math.min(viewOffsetMs, oldest-WINDOW_MS/2);
+        viewOffsetMs=Math.max(0,viewOffsetMs);
+      }
+      isSwipeMode=viewOffsetMs>1000;
+    },{passive:true});
+
+    elevCvs.addEventListener('touchend',()=>{
+      // Se queda donde lo dejaste — no vuelve automáticamente
+    });
+
+    // Doble tap para volver a "ahora"
+    let lastTap=0;
+    elevCvs.addEventListener('touchend',()=>{
+      const now=Date.now();
+      if(now-lastTap<300){
+        viewOffsetMs=0;isSwipeMode=false;
+      }
+      lastTap=now;
+    });
 
     function drawElevation(){
       const W=elevCvs.width, H=elevCvs.height;
-      if(!W||!H) return;
-
+      if(!W||!H){ return; }
       elevCtx.clearRect(0,0,W,H);
-
-      // Posición del punto "ahora" al 75% del ancho
       const dotX=W*0.75;
       const rightW=W*0.25;
 
-      // Si no hay datos aún, dibujar estado vacío
-      if(pastAlt.length<2){
+      if(elevHistory.length<2){
         elevCtx.fillStyle='rgba(255,255,255,0.04)';
         elevCtx.font='8px Share Tech Mono';
         elevCtx.fillText('WAITING GPS...',10,H/2+3);
         return;
       }
 
-      const curAlt=pastAlt[pastAlt.length-1];
+      // Ventana de tiempo visible
+      const now=Date.now();
+      const windowEnd=now-viewOffsetMs;          // borde derecho (punto actual)
+      const windowStart=windowEnd-WINDOW_MS;     // borde izquierdo (3 min atrás)
+
+      // Filtrar puntos en la ventana + 1 punto antes para continuidad
+      const visible=elevHistory.filter(p=>p.t>=windowStart&&p.t<=windowEnd);
+      if(visible.length<2){
+        elevCtx.fillStyle='rgba(255,255,255,0.04)';
+        elevCtx.font='8px Share Tech Mono';
+        elevCtx.fillText('WAITING GPS...',10,H/2+3);
+        return;
+      }
+
+      const curAlt=visible[visible.length-1].a;
       const ref=tripStartAlt||curAlt;
 
-      // Escala relativa al inicio: centrada en el punto de partida
-      const diffs=pastAlt.map(a=>a-ref);
-      const minD=Math.min(...diffs)-15;
-      const maxD=Math.max(...diffs)+15;
-      const absMax=Math.max(Math.abs(minD),Math.abs(maxD),30);
-      const minA=ref-absMax, maxA=ref+absMax;
+      // Escala dinámica según puntos visibles
+      const alts=visible.map(p=>p.a);
+      const minA=Math.min(...alts)-12;
+      const maxA=Math.max(...alts)+12;
       const range=maxA-minA||1;
       const yOf=a=>H-5-((a-minA)/range)*(H-12);
 
-      // ── Línea de referencia (inicio del viaje) ──
-      const refY=yOf(ref);
-      elevCtx.beginPath();elevCtx.moveTo(0,refY);elevCtx.lineTo(dotX-2,refY);
-      elevCtx.strokeStyle='rgba(251,146,60,0.18)';elevCtx.lineWidth=1;
-      elevCtx.setLineDash([3,5]);elevCtx.stroke();elevCtx.setLineDash([]);
+      // Mapear tiempo → X (0 a dotX)
+      const xOf=t=>((t-windowStart)/WINDOW_MS)*dotX;
 
-      // ── Área rellena historial (izquierda hasta 75%) ──
+      // ── Área rellena ──
       elevCtx.beginPath();
-      elevCtx.moveTo(0,H);
-      pastAlt.forEach((a,i)=>{
-        elevCtx.lineTo((i/(pastAlt.length-1))*dotX, yOf(a));
-      });
-      elevCtx.lineTo(dotX,H);elevCtx.closePath();
+      elevCtx.moveTo(xOf(visible[0].t),H);
+      visible.forEach(p=>elevCtx.lineTo(xOf(p.t),yOf(p.a)));
+      elevCtx.lineTo(xOf(visible[visible.length-1].t),H);
+      elevCtx.closePath();
       const gL=elevCtx.createLinearGradient(0,0,0,H);
       gL.addColorStop(0,'rgba(124,58,237,0.28)');
       gL.addColorStop(1,'rgba(124,58,237,0)');
@@ -854,88 +902,100 @@
 
       // ── Línea del perfil ──
       elevCtx.beginPath();
-      pastAlt.forEach((a,i)=>{
-        const x=(i/(pastAlt.length-1))*dotX;
-        i===0?elevCtx.moveTo(x,yOf(a)):elevCtx.lineTo(x,yOf(a));
+      visible.forEach((p,i)=>{
+        const x=xOf(p.t), y=yOf(p.a);
+        i===0?elevCtx.moveTo(x,y):elevCtx.lineTo(x,y);
       });
-      elevCtx.strokeStyle='rgba(192,132,252,0.85)';
-      elevCtx.lineWidth=1.8;elevCtx.shadowBlur=5;
-      elevCtx.shadowColor='rgba(192,132,252,0.4)';
+      elevCtx.strokeStyle='rgba(192,132,252,0.9)';
+      elevCtx.lineWidth=2;
+      elevCtx.shadowBlur=6;elevCtx.shadowColor='rgba(192,132,252,0.5)';
       elevCtx.stroke();elevCtx.shadowBlur=0;
 
-      // ── Zona derecha oscura con datos de altitud ──
-      // (el CSS del alt-panel lo cubre, pero dibujamos el fondo)
+      // ── Zona derecha oscura ──
       elevCtx.fillStyle='rgba(0,0,0,0.45)';
       elevCtx.fillRect(dotX+1,0,rightW,H);
 
-      // ── Punteada gris desde punto hacia la derecha ──
+      // ── Punteada hacia la derecha ──
       const posY=yOf(curAlt);
       for(let x=dotX+6;x<W-10;x+=8){
-        const prog=(x-dotX)/rightW;
-        const alpha=0.2*(1-prog*0.85);
+        const alpha=0.18*(1-((x-dotX)/rightW)*0.85);
         elevCtx.beginPath();elevCtx.moveTo(x,posY);elevCtx.lineTo(x+4,posY);
         elevCtx.strokeStyle=`rgba(255,255,255,${alpha})`;
         elevCtx.lineWidth=1;elevCtx.stroke();
       }
 
-      // ── Cuadrícula suave (solo zona izquierda) ──
-      elevCtx.setLineDash([2,6]);elevCtx.strokeStyle='rgba(255,255,255,0.03)';elevCtx.lineWidth=1;
+      // ── Cuadrícula ──
+      elevCtx.setLineDash([2,6]);
+      elevCtx.strokeStyle='rgba(255,255,255,0.03)';
+      elevCtx.lineWidth=1;
       [H*0.33,H*0.66].forEach(y=>{
         elevCtx.beginPath();elevCtx.moveTo(0,y);elevCtx.lineTo(dotX,y);elevCtx.stroke();
       });
       elevCtx.setLineDash([]);
 
       // ── Punto posición actual al 75% ──
-      const pulse=0.5+0.5*Math.sin(Date.now()/280);
+      const pulse=isSwipeMode?0.6:0.5+0.5*Math.sin(Date.now()/280);
+      const dotColor=isSwipeMode?'rgba(192,132,252,':'rgba(251,146,60,';
       elevCtx.beginPath();elevCtx.arc(dotX,posY,9,0,Math.PI*2);
-      elevCtx.fillStyle=`rgba(255,255,255,${0.03+pulse*0.05})`;elevCtx.fill();
+      elevCtx.fillStyle=`rgba(255,255,255,${0.03+pulse*0.04})`;elevCtx.fill();
       elevCtx.beginPath();elevCtx.arc(dotX,posY,5.5,0,Math.PI*2);
-      elevCtx.fillStyle=`rgba(251,146,60,${0.3+pulse*0.4})`;
-      elevCtx.shadowBlur=8;elevCtx.shadowColor='rgba(251,146,60,0.6)';
+      elevCtx.fillStyle=`${dotColor}${0.3+pulse*0.4})`;
+      elevCtx.shadowBlur=8;elevCtx.shadowColor=`${dotColor}0.6)`;
       elevCtx.fill();elevCtx.shadowBlur=0;
       elevCtx.beginPath();elevCtx.arc(dotX,posY,2.5,0,Math.PI*2);
-      elevCtx.fillStyle='#fff';elevCtx.shadowBlur=10;
-      elevCtx.shadowColor='rgba(255,255,255,1)';elevCtx.fill();elevCtx.shadowBlur=0;
-      // Línea punteada al suelo
+      elevCtx.fillStyle='#fff';
+      elevCtx.shadowBlur=8;elevCtx.shadowColor='#fff';
+      elevCtx.fill();elevCtx.shadowBlur=0;
+      // Línea al suelo
       elevCtx.beginPath();elevCtx.moveTo(dotX,posY+4);elevCtx.lineTo(dotX,H-2);
       elevCtx.strokeStyle='rgba(255,255,255,0.1)';elevCtx.lineWidth=1;
       elevCtx.setLineDash([2,3]);elevCtx.stroke();elevCtx.setLineDash([]);
 
-      // ── Panel derecho: datos de altitud ──
+      // ── Indicador swipe ──
+      if(isSwipeMode){
+        const minsBack=Math.round(viewOffsetMs/60000);
+        elevCtx.fillStyle='rgba(192,132,252,0.5)';
+        elevCtx.font='7px Share Tech Mono';
+        elevCtx.textAlign='center';
+        elevCtx.fillText(`◄ ${minsBack} min atrás · doble tap = ahora`,dotX/2,H-5);
+        elevCtx.textAlign='left';
+      }
+
+      // ── Panel derecho altitud ──
       const diffFromStart=Math.round(curAlt-(tripStartAlt||curAlt));
-      const absAlt=Math.round(curAlt);
-      // Altitud absoluta
-      elevCtx.font='bold 13px Orbitron,monospace';
-      elevCtx.textAlign='center';
       const panelCX=dotX+rightW/2;
-      elevCtx.fillStyle=diffFromStart>5?'rgba(251,146,60,0.9)':diffFromStart<-5?'rgba(74,222,128,0.9)':'rgba(255,255,255,0.7)';
-      elevCtx.fillText(absAlt,panelCX,H*0.38);
+      elevCtx.textAlign='center';
+      elevCtx.font='bold 13px Orbitron,monospace';
+      elevCtx.fillStyle=diffFromStart>5?'rgba(251,146,60,0.9)':
+        diffFromStart<-5?'rgba(74,222,128,0.9)':'rgba(255,255,255,0.7)';
+      elevCtx.fillText(Math.round(curAlt),panelCX,H*0.38);
       elevCtx.font='7px Share Tech Mono';
       elevCtx.fillStyle='rgba(255,255,255,0.2)';
       elevCtx.fillText('msnm',panelCX,H*0.38+12);
-      // Diferencia desde inicio
-      const diffStr=(diffFromStart>=0?'+':'')+diffFromStart+'m';
       elevCtx.font='bold 10px Orbitron,monospace';
-      elevCtx.fillStyle=diffFromStart>5?'rgba(251,146,60,0.8)':diffFromStart<-5?'rgba(74,222,128,0.8)':'rgba(255,255,255,0.25)';
-      elevCtx.fillText(diffStr,panelCX,H*0.72);
+      elevCtx.fillStyle=diffFromStart>5?'rgba(251,146,60,0.8)':
+        diffFromStart<-5?'rgba(74,222,128,0.8)':'rgba(255,255,255,0.2)';
+      elevCtx.fillText((diffFromStart>=0?'+':'')+diffFromStart+'m',panelCX,H*0.72);
       elevCtx.font='6px Share Tech Mono';
       elevCtx.fillStyle='rgba(255,255,255,0.15)';
       elevCtx.fillText('vs inicio',panelCX,H*0.72+10);
       elevCtx.textAlign='left';
 
-      // ── Min/Max labels ──
-      const allDiffs=pastAlt.map(a=>a-ref);
-      document.getElementById('elevMin').textContent='▼ '+(Math.round(Math.min(...allDiffs)))+'m';
-      document.getElementById('elevMax').textContent='▲ +'+(Math.round(Math.max(...allDiffs)))+'m';
+      // ── Min/Max del tramo visible ──
+      const minVisible=Math.round(Math.min(...alts));
+      const maxVisible=Math.round(Math.max(...alts));
+      document.getElementById('elevMin').textContent='▼ '+minVisible+'m';
+      document.getElementById('elevMax').textContent='▲ '+maxVisible+'m';
 
-      // ── Pendiente ──
-      if(pastAlt.length>=10){
-        const ar=pastAlt.slice(-5).reduce((a,b)=>a+b,0)/5;
-        const ao=pastAlt.slice(-10,-5).reduce((a,b)=>a+b,0)/5;
-        const diff=ar-ao;
+      // ── Pendiente (últimos 10 puntos) ──
+      if(elevHistory.length>=10){
+        const recent=elevHistory.slice(-10).map(p=>p.a);
+        const ar=recent.slice(-5).reduce((a,b)=>a+b,0)/5;
+        const ao=recent.slice(0,5).reduce((a,b)=>a+b,0)/5;
+        const d=ar-ao;
         const badge=document.getElementById('slopeBadge');
-        if(diff>1.5){badge.textContent='▲ UPHILL';badge.className='slope-badge up';}
-        else if(diff<-1.5){badge.textContent='▼ DOWNHILL';badge.className='slope-badge down';}
+        if(d>1.5){badge.textContent='▲ UPHILL';badge.className='slope-badge up';}
+        else if(d<-1.5){badge.textContent='▼ DOWNHILL';badge.className='slope-badge down';}
         else{badge.textContent='── FLAT';badge.className='slope-badge flat';}
       }
     }
@@ -952,7 +1012,7 @@
     setInterval(checkOnline,15000);
 
     // Loop elevación 30fps
-    setInterval(()=>{ drawElevation(); }, 33);
+    setInterval(()=>drawElevation(),33);
 
     // ══════════════════════════════════════
     // VOICE SYSTEM — Web Speech API
@@ -1058,19 +1118,20 @@
           }
         }, {once:true});
         const btn=document.getElementById('startStop');
+        const controls=document.getElementById('controls');
         if(this.isRecording){
+          // Estaba grabando — restaurar estado PAUSE
           btn.textContent='PAUSE';btn.className='btn btn-pause';
           document.getElementById('recBadge').classList.add('on');
+          controls.classList.remove('paused');
+        } else if(this.currentTripDuration>0||this.tripDistance>0){
+          // Tenía viaje pausado — mostrar CONTINUE y FINISH, conservar km
+          btn.textContent='CONTINUE';btn.className='btn btn-start';
+          controls.classList.add('paused');
         } else {
-          // Siempre START al abrir la app — nunca CONTINUE
+          // Sin viaje previo — START limpio
           btn.textContent='START';btn.className='btn btn-start';
-          // Si había viaje en curso, resetearlo al abrir
-          if(this.currentTripDuration>0){
-            this.tripDistance=0;this.maxSpeed=0;
-            this.currentTripDuration=0;this.pausedTime=0;
-            resetElevation();
-            this.saveState();
-          }
+          controls.classList.remove('paused');
         }
         setInterval(()=>this.saveState(),30000);
       }
@@ -1270,7 +1331,7 @@
         const badge=document.getElementById('recBadge');
         const controls=document.getElementById('controls');
         if(this.isRecording){
-          // START fresco: resetea elevación
+          // Solo resetea elevación si es START fresco (no CONTINUE)
           if(btn.textContent==='START') resetElevation();
           this.tripStartTime=Date.now()-this.pausedTime;
           btn.textContent='PAUSE';btn.className='btn btn-pause';
@@ -1282,7 +1343,6 @@
           this.pausedTime=Date.now()-this.tripStartTime;
           btn.textContent='CONTINUE';btn.className='btn btn-start';
           badge.classList.remove('on');this.updateStatus('PAUSED');
-          // Mostrar FINISH, ocultar RESET cuando pausado
           controls.classList.add('paused');
           Voice.speak(`Ride paused. Time is ${Voice.getTimeStr()}`);
         }
@@ -1319,9 +1379,6 @@
       }
 
       resetTrip(){
-        // RESET — solo funciona cuando NO está grabando (estado STANDBY/FINISH)
-        // Resetea km, tiempo, maxSpeed Y elevación para viaje nuevo
-        if(this.isRecording) return; // protección: no resetear mientras graba
         if(this.tripDistance>0||this.currentTripDuration>0){
           this.history.unshift({
             date:new Date().toLocaleDateString('en-US'),
@@ -1334,7 +1391,7 @@
         this.tripDistance=0;this.maxSpeed=0;this.currentTripDuration=0;this.pausedTime=0;
         this.tripStartTime=Date.now();this.prevGearIdx=null;
         this.accelSmooth=0;this.lastSpeedZone=0;this.lastAlertSpeed=0;this.last50km=0;
-        resetElevation();
+        // NO resetea elevación — sigue acumulando el recorrido
         this.saveState();
         this.updateDisplay();
         document.getElementById('tripTime').textContent='00:00';
@@ -1394,7 +1451,16 @@
     window.addEventListener('load',()=>{window.speedoInstance=new MotoSpeedometer();fixHeight();});
     window.addEventListener('beforeunload',()=>{
       const i=window.speedoInstance;
-      if(i){i.saveState();i.saveHistory();localStorage.setItem('isRecording',i.isRecording);}
+      if(i){
+        // Si estaba grabando, pausar antes de cerrar para conservar km
+        if(i.isRecording){
+          i.pausedTime=Date.now()-i.tripStartTime;
+          i.isRecording=false;
+        }
+        i.saveState();
+        i.saveHistory();
+        localStorage.setItem('isRecording','false');
+      }
     });
     if('serviceWorker' in navigator)
       navigator.serviceWorker.register('service-worker.js')
