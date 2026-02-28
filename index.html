@@ -1350,9 +1350,12 @@
       }
 
       finishTrip(){
-        // Congela elevación, guarda en historial, resetea contadores
-        // La línea de elevación queda visible hasta el próximo START
+        // FINISH — solo detiene la grabación y congela la elevación
+        // Los km acumulados NO se tocan — quedan hasta que el usuario presione RESET
         const controls=document.getElementById('controls');
+        this.isRecording=false;
+        this.pausedTime=0;
+        // Guardar en historial como referencia, pero SIN resetear tripDistance
         if(this.tripDistance>0||this.currentTripDuration>0){
           this.history.unshift({
             date:new Date().toLocaleDateString('en-US'),
@@ -1362,17 +1365,12 @@
           });
           this.saveHistory();
         }
-        this.tripDistance=0;this.maxSpeed=0;this.currentTripDuration=0;this.pausedTime=0;
-        this.tripStartTime=Date.now();this.isRecording=false;this.prevGearIdx=null;
-        this.accelSmooth=0;this.lastSpeedZone=0;this.lastAlertSpeed=0;this.last50km=0;
-        // NO resetear elevación — queda congelada mostrando el recorrido completo
-        this.saveState();localStorage.setItem('isRecording',false);
-        this.updateDisplay();
+        // Elevaciòn queda congelada — NO llamar resetElevation()
+        localStorage.setItem('isRecording','false');
+        this.saveState();
         document.getElementById('startStop').textContent='START';
         document.getElementById('startStop').className='btn btn-start';
         document.getElementById('recBadge').classList.remove('on');
-        document.getElementById('tripTime').textContent='00:00';
-        document.getElementById('progFill').style.width='0%';
         controls.classList.remove('paused');
         this.updateHistoryDisplay();
         this.updateStatus(this.isTracking?'STANDBY':'INIT GPS');
