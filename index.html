@@ -638,16 +638,26 @@
     }
     drawPts();
 
-    // ── Auto modo día/noche por hora ──
-    // 6am-6pm = día, resto = noche. Sin sensores, sin botones.
-    function applyDayNight(){
-      const h=new Date().getHours();
-      const isDay=h>=6&&h<18;
-      document.documentElement.setAttribute('data-theme',isDay?'day':'night');
-      document.body.classList.toggle('day-mode',isDay);
-    }
+    // ── Modo día/noche — toque largo en el logo (defecto: oscuro) ──
+    let isDayMode = localStorage.getItem('dayMode')==='true';
+    function applyDayNight(){ document.body.classList.toggle('day-mode', isDayMode); }
     applyDayNight();
-    setInterval(applyDayNight,60000); // revisar cada minuto
+    const logoEl = document.querySelector('.logo');
+    let logoTimer=null, logoPressed=false;
+    logoEl.addEventListener('touchstart',e=>{
+      logoPressed=true;
+      logoEl.style.opacity='0.5';
+      logoTimer=setTimeout(()=>{
+        if(!logoPressed) return;
+        isDayMode=!isDayMode;
+        localStorage.setItem('dayMode',isDayMode);
+        applyDayNight();
+        [80,160,240,320].forEach((d,i)=>setTimeout(()=>logoEl.style.opacity=i%2===0?'0.3':'1',d));
+      },900);
+    },{passive:true});
+    const endLogo=()=>{ logoPressed=false; clearTimeout(logoTimer); logoEl.style.opacity='1'; };
+    logoEl.addEventListener('touchend',endLogo);
+    logoEl.addEventListener('touchcancel',endLogo);
     function updateClock(){
       const now=new Date();
       document.getElementById('clockVal').textContent=
