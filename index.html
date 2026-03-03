@@ -306,7 +306,7 @@
     .gear-lbl{font-size:clamp(7px,1.8vw,9px);letter-spacing:2px;color:rgba(255,255,255,0.25);margin-top:1px;}
     .gear-info{display:flex;flex-direction:column;align-items:center;gap:5px;}
     .gear-name{font-family:'Orbitron',sans-serif;font-size:clamp(13px,3.5vw,5dvh);font-weight:700;letter-spacing:2px;color:rgba(192,132,252,0.8);}
-    .alt-val{font-family:'Orbitron',sans-serif;font-size:clamp(14px,3.8vw,5.5dvh);font-weight:700;color:var(--g);text-shadow:0 0 12px rgba(74,222,128,0.7);letter-spacing:1px;animation:gGlow 3s ease-in-out infinite;}
+    .alt-val{font-family:'Orbitron',sans-serif;font-size:clamp(20px,5.5vw,7dvh);font-weight:700;color:var(--g);text-shadow:0 0 12px rgba(74,222,128,0.7);letter-spacing:1px;animation:gGlow 3s ease-in-out infinite;}
     @keyframes gGlow{0%,100%{filter:brightness(1);}50%{filter:brightness(1.6);}}
     .alt-label{font-size:clamp(7px,1.8vw,8px);letter-spacing:3px;color:rgba(255,255,255,0.2);}
 
@@ -442,10 +442,11 @@
     .btn-pause{background:rgba(251,146,60,0.15);color:var(--fl);border:1px solid rgba(234,88,12,0.6);text-shadow:0 0 10px rgba(251,146,60,0.7);}
     .btn-reset{background:rgba(234,88,12,0.1);color:var(--fl);border:1px solid rgba(234,88,12,0.45);}
     .btn-finish{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.4);
-      text-shadow:0 0 8px rgba(239,68,68,0.5);display:none;}
-    .controls.paused{grid-template-columns:1fr 1fr 1fr;}
-    .controls.paused .btn-finish{display:block;}
-    .controls.paused .btn-reset{display:none;}
+      text-shadow:0 0 8px rgba(239,68,68,0.5);font-size:8px;}
+    .btn-finish.active{background:rgba(239,68,68,0.18);color:#ef4444;border-color:rgba(239,68,68,0.6);text-shadow:0 0 8px rgba(239,68,68,0.5);}
+    .btn-reset.confirming{background:rgba(239,68,68,0.25);color:#ef4444;border:1px solid rgba(239,68,68,0.7);animation:rPulse 0.4s ease-in-out infinite alternate;}
+    @keyframes rPulse{from{box-shadow:0 0 4px rgba(239,68,68,0.3);}to{box-shadow:0 0 14px rgba(239,68,68,0.8);}}
+    .controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:6px 14px 5px;}
     .btn-hist{grid-column:1/-1;clip-path:none;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.08);letter-spacing:4px;}
     .btn-hist:active{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);}
 
@@ -591,14 +592,14 @@
     <!-- CONTROLS -->
     <div class="controls" id="controls">
       <button class="btn btn-start"  id="startStop">START</button>
+      <button class="btn btn-finish" id="finishTrip">END TRIP</button>
       <button class="btn btn-reset"  id="resetTrip">RESET</button>
-      <button class="btn btn-finish" id="finishTrip">FINISH</button>
       <button class="btn btn-hist"   id="toggleHistory">▼ TRIP HISTORY</button>
     </div>
 
     <div class="mock-footer" style="text-align:center;font-size:6px;letter-spacing:3px;
       color:rgba(255,255,255,0.08);padding:3px 0;border-top:1px solid rgba(124,58,237,0.08);">
-      LEVISPEED v24
+      LEVISPEED v25
     </div>
 
     <!-- HISTORY -->
@@ -1128,20 +1129,21 @@
           }
         }, {once:true});
         const btn=document.getElementById('startStop');
-        const controls=document.getElementById('controls');
+        const finBtn=document.getElementById('finishTrip');
+        const wasFinished=localStorage.getItem('tripFinished')==='true';
         if(this.isRecording){
           // Estaba grabando — restaurar estado PAUSE
           btn.textContent='PAUSE';btn.className='btn btn-pause';
           document.getElementById('recBadge').classList.add('on');
-          controls.classList.remove('paused');
-        } else if(this.currentTripDuration>0||this.tripDistance>0){
-          // Tenía viaje pausado — mostrar CONTINUE y FINISH, conservar km
+          finBtn.classList.remove('active');
+        } else if(!wasFinished&&(this.currentTripDuration>0||this.tripDistance>0)){
+          // Viaje pausado (no finalizado) — CONTINUE + END TRIP activo
           btn.textContent='CONTINUE';btn.className='btn btn-start';
-          controls.classList.add('paused');
+          finBtn.classList.add('active');
         } else {
-          // Sin viaje previo — START limpio
+          // Finalizado o sin viaje — START limpio
           btn.textContent='START';btn.className='btn btn-start';
-          controls.classList.remove('paused');
+          finBtn.classList.remove('active');
         }
         setInterval(()=>this.saveState(),30000);
       }
@@ -1339,33 +1341,30 @@
         this.isRecording=!this.isRecording;
         const btn=document.getElementById('startStop');
         const badge=document.getElementById('recBadge');
-        const controls=document.getElementById('controls');
+        const finBtn=document.getElementById('finishTrip');
         if(this.isRecording){
-          // Solo resetea elevación si es START fresco (no CONTINUE)
           if(btn.textContent==='START') resetElevation();
           this.tripStartTime=Date.now()-this.pausedTime;
           btn.textContent='PAUSE';btn.className='btn btn-pause';
           badge.classList.add('on');this.updateStatus('RECORDING');
-          controls.classList.remove('paused');
+          finBtn.classList.remove('active');
           this.voiceReady=true;
           Voice.speak(`LeviSpeed started. Time is ${Voice.getTimeStr()}`);
         }else{
           this.pausedTime=Date.now()-this.tripStartTime;
           btn.textContent='CONTINUE';btn.className='btn btn-start';
           badge.classList.remove('on');this.updateStatus('PAUSED');
-          controls.classList.add('paused');
+          finBtn.classList.add('active');
           Voice.speak(`Ride paused. Time is ${Voice.getTimeStr()}`);
         }
         this.saveState();localStorage.setItem('isRecording',this.isRecording);
       }
 
       finishTrip(){
-        // FINISH — solo detiene la grabación y congela la elevación
-        // Los km acumulados NO se tocan — quedan hasta que el usuario presione RESET
-        const controls=document.getElementById('controls');
+        const finBtn=document.getElementById('finishTrip');
+        if(!finBtn.classList.contains('active')) return;
         this.isRecording=false;
         this.pausedTime=0;
-        // Guardar en historial como referencia, pero SIN resetear tripDistance
         if(this.tripDistance>0||this.currentTripDuration>0){
           this.history.unshift({
             date:new Date().toLocaleDateString('en-US'),
@@ -1375,18 +1374,34 @@
           });
           this.saveHistory();
         }
-        // Elevaciòn queda congelada — NO llamar resetElevation()
         localStorage.setItem('isRecording','false');
+        localStorage.setItem('tripFinished','true');
         this.saveState();
         document.getElementById('startStop').textContent='START';
         document.getElementById('startStop').className='btn btn-start';
         document.getElementById('recBadge').classList.remove('on');
-        controls.classList.remove('paused');
+        finBtn.classList.remove('active');
         this.updateHistoryDisplay();
         this.updateStatus(this.isTracking?'STANDBY':'INIT GPS');
       }
 
       resetTrip(){
+        const rBtn=document.getElementById('resetTrip');
+        if(!this.resetConfirm){
+          this.resetConfirm=true;
+          rBtn.textContent='CONFIRM?';
+          rBtn.classList.add('confirming');
+          this.resetTimer=setTimeout(()=>{
+            this.resetConfirm=false;
+            rBtn.textContent='RESET';
+            rBtn.classList.remove('confirming');
+          },3000);
+          return;
+        }
+        clearTimeout(this.resetTimer);
+        this.resetConfirm=false;
+        rBtn.textContent='RESET';
+        rBtn.classList.remove('confirming');
         if(this.tripDistance>0||this.currentTripDuration>0){
           this.history.unshift({
             date:new Date().toLocaleDateString('en-US'),
@@ -1399,12 +1414,20 @@
         this.tripDistance=0;this.maxSpeed=0;this.currentTripDuration=0;this.pausedTime=0;
         this.tripStartTime=Date.now();this.prevGearIdx=null;
         this.accelSmooth=0;this.lastSpeedZone=0;this.lastAlertSpeed=0;this.last50km=0;
-        // NO resetea elevación — sigue acumulando el recorrido
+        this.isRecording=false;
+        resetElevation();
+        localStorage.setItem('isRecording','false');
+        localStorage.setItem('tripFinished','false');
         this.saveState();
         this.updateDisplay();
+        document.getElementById('startStop').textContent='START';
+        document.getElementById('startStop').className='btn btn-start';
+        document.getElementById('recBadge').classList.remove('on');
+        document.getElementById('finishTrip').classList.remove('active');
         document.getElementById('tripTime').textContent='00:00';
         document.getElementById('progFill').style.width='0%';
         this.updateHistoryDisplay();
+        this.updateStatus(this.isTracking?'STANDBY':'INIT GPS');
       }
 
       saveState(){
@@ -1464,6 +1487,7 @@
         if(i.isRecording){
           i.pausedTime=Date.now()-i.tripStartTime;
           i.isRecording=false;
+          localStorage.setItem('tripFinished','false');
         }
         i.saveState();
         i.saveHistory();
