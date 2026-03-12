@@ -599,7 +599,7 @@
 
     <div class="mock-footer" style="text-align:center;font-size:6px;letter-spacing:3px;
       color:rgba(255,255,255,0.08);padding:3px 0;border-top:1px solid rgba(124,58,237,0.08);">
-      LEVISPEED v25
+      LEVISPEED v26
     </div>
 
     <!-- HISTORY -->
@@ -677,6 +677,14 @@
     // Solo con botón dedicado RESET ODO (doble confirmación)
     // ══════════════════════════════════════
     let totalOdo = parseFloat(localStorage.getItem('totalOdo')) || 0;
+    // Sanity check: el odo total nunca puede ser menor que el viaje actual
+    (function fixOdoSanity(){
+      const tripKm = parseFloat(localStorage.getItem('tripDistance')) || 0;
+      if(tripKm > totalOdo){
+        totalOdo = tripKm;
+        try{ localStorage.setItem('totalOdo', totalOdo.toFixed(3)); }catch(e){}
+      }
+    })();
     let odoConfirmPending = false;
     let odoConfirmTimer = null;
 
@@ -694,7 +702,10 @@
     }
 
     function addOdoKm(km){
-      if(km <= 0) return;
+      if(km <= 0 || km > 5) return; // ignorar saltos GPS imposibles (>5km de un punto al otro)
+      // Leer siempre el valor mas reciente de localStorage para evitar desfases
+      const stored = parseFloat(localStorage.getItem('totalOdo'));
+      if(!isNaN(stored) && stored > totalOdo) totalOdo = stored; // sincronizar si hay desfase
       totalOdo += km;
       try{ localStorage.setItem('totalOdo', totalOdo.toFixed(3)); }catch(e){}
       updateOdoDisplay();
@@ -1361,8 +1372,10 @@
       }
 
       finishTrip(){
-        const finBtn=document.getElementById('finishTrip');
-        if(!finBtn.classList.contains('active')) return;
+        // Solo actua si hay un viaje activo o pausado
+        const hastrip = this.tripDistance>0 || this.currentTripDuration>0 || this.isRecording;
+        if(!hastrip) return;
+        // Detener todo
         this.isRecording=false;
         this.pausedTime=0;
         if(this.tripDistance>0||this.currentTripDuration>0){
@@ -1377,8 +1390,10 @@
         localStorage.setItem('isRecording','false');
         localStorage.setItem('tripFinished','true');
         this.saveState();
-        document.getElementById('startStop').textContent='START';
-        document.getElementById('startStop').className='btn btn-start';
+        // Reset UI
+        const startBtn=document.getElementById('startStop');
+        const finBtn=document.getElementById('finishTrip');
+        startBtn.textContent='START';startBtn.className='btn btn-start';
         document.getElementById('recBadge').classList.remove('on');
         finBtn.classList.remove('active');
         this.updateHistoryDisplay();
