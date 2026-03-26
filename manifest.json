@@ -2,10 +2,11 @@
   "name": "LeviSpeed",
   "short_name": "LeviSpeed",
   "description": "Velocímetro GPS para motocicletas",
+  "version": "30",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#1a1a1a",
-  "theme_color": "#1a1a1a",
+  "background_color": "#070010",
+  "theme_color": "#070010",
   "orientation": "portrait",
   "scope": "./",
   "lang": "es",
@@ -43,4 +44,3 @@
     }
   ]
 }
-
