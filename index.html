@@ -1316,15 +1316,13 @@
         // Color progresivo igual que el LED: verde→naranja→rojo según velocidad
         // 0-40 km/h = verde, 41-60 = naranja, 61+ = rojo
         // El gradiente arranca siempre en verde (izquierda) y termina en el color actual
-        const spd = this.currentSpeed;
+        const spdBar = this.currentSpeed;
         let endColor, glowColor;
-        if(spd <= 40){
-          // Todo verde, más brillante con la velocidad
-          const i = Math.round(80 + (spd/40)*100); // 80→180 intensidad
+        if(spdBar <= 40){
           endColor = `rgb(74,222,128)`;
-          glowColor = `rgba(74,222,128,${0.3+spd/40*0.6})`;
+          glowColor = `rgba(74,222,128,${0.3+spdBar/40*0.6})`;
           bar.style.background = `linear-gradient(90deg,#166534,#16a34a,${endColor})`;
-        } else if(spd <= 60){
+        } else if(spdBar <= 60){
           // Verde → naranja
           endColor = `rgb(251,146,60)`;
           glowColor = `rgba(251,146,60,0.8)`;
