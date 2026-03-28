@@ -431,22 +431,40 @@
 
     /* ── BUTTONS ── */
     .controls{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 14px 5px;}
-    .btn{padding:clamp(11px,2.8dvh,18px) 8px;border:none;
+    .btn{padding:clamp(13px,3.2dvh,20px) 8px;border:none;
       font-family:'Orbitron',sans-serif;font-size:clamp(11px,3vw,14px);font-weight:700;
-      letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;
+      letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:background 0.15s,box-shadow 0.15s,transform 0.1s;
       clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);
-      position:relative;overflow:hidden;}
+      position:relative;overflow:hidden;
+      -webkit-tap-highlight-color:transparent;touch-action:manipulation;}
     .btn::after{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.13),transparent);animation:bShine 3s linear infinite;}
     @keyframes bShine{0%{left:-100%}100%{left:200%}}
-    .btn:active{transform:scale(0.95);}
-    .btn-start{background:rgba(124,58,237,0.22);color:#c084fc;border:1px solid rgba(124,58,237,0.7);text-shadow:0 0 12px rgba(192,132,252,0.9);box-shadow:0 0 10px rgba(124,58,237,0.25);}
-    .btn-pause{background:rgba(251,146,60,0.22);color:#fdba74;border:1px solid rgba(234,88,12,0.8);text-shadow:0 0 12px rgba(251,146,60,0.9);box-shadow:0 0 10px rgba(234,88,12,0.3);}
-    .btn-continue{background:rgba(34,197,94,0.18);color:#4ade80;border:1px solid rgba(34,197,94,0.65);text-shadow:0 0 10px rgba(74,222,128,0.8);box-shadow:0 0 10px rgba(34,197,94,0.2);}
-    .btn-finish{background:rgba(239,68,68,0.08);color:rgba(239,68,68,0.4);border:1px solid rgba(239,68,68,0.2);font-size:8px;letter-spacing:1px;}
-    .btn-finish.active{background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.75);text-shadow:0 0 10px rgba(239,68,68,0.8);box-shadow:0 0 10px rgba(239,68,68,0.25);}
-    .btn-reset{background:rgba(100,116,139,0.12);color:rgba(148,163,184,0.7);border:1px solid rgba(100,116,139,0.35);letter-spacing:1px;}
-    .btn-reset.confirming{background:rgba(239,68,68,0.22);color:#f87171;border:1px solid rgba(239,68,68,0.7);animation:rPulse 0.4s ease-in-out infinite alternate;}
-    @keyframes rPulse{from{box-shadow:0 0 4px rgba(239,68,68,0.3);}to{box-shadow:0 0 16px rgba(239,68,68,0.9);}}
+    .btn:active{transform:scale(0.94);}
+    /* START — violeta sólido, siempre visible */
+    .btn-start{background:rgba(124,58,237,0.35);color:#e9d5ff;border:2px solid rgba(124,58,237,0.9);
+      text-shadow:0 0 14px rgba(192,132,252,1);box-shadow:0 0 16px rgba(124,58,237,0.4),inset 0 1px 0 rgba(255,255,255,0.1);}
+    /* PAUSE — naranja */
+    .btn-pause{background:rgba(234,88,12,0.32);color:#fed7aa;border:2px solid rgba(234,88,12,0.9);
+      text-shadow:0 0 14px rgba(251,146,60,1);box-shadow:0 0 16px rgba(234,88,12,0.4),inset 0 1px 0 rgba(255,255,255,0.1);}
+    /* CONTINUE — verde */
+    .btn-continue{background:rgba(22,163,74,0.28);color:#bbf7d0;border:2px solid rgba(34,197,94,0.85);
+      text-shadow:0 0 12px rgba(74,222,128,0.9);box-shadow:0 0 16px rgba(34,197,94,0.35),inset 0 1px 0 rgba(255,255,255,0.1);}
+    /* END TRIP — apagado cuando no hay viaje */
+    .btn-finish{background:rgba(30,10,10,0.5);color:rgba(239,68,68,0.3);
+      border:2px solid rgba(239,68,68,0.18);font-size:8px;letter-spacing:1px;}
+    /* END TRIP activo — rojo brillante */
+    .btn-finish.active{background:rgba(185,28,28,0.35);color:#fca5a5;
+      border:2px solid rgba(239,68,68,0.9);
+      text-shadow:0 0 14px rgba(239,68,68,1);
+      box-shadow:0 0 18px rgba(239,68,68,0.5),inset 0 1px 0 rgba(255,255,255,0.1);
+      animation:endPulse 1.8s ease-in-out infinite;}
+    @keyframes endPulse{0%,100%{box-shadow:0 0 18px rgba(239,68,68,0.5);}50%{box-shadow:0 0 28px rgba(239,68,68,0.8),0 0 50px rgba(239,68,68,0.3);}}
+    /* RESET — gris discreto */
+    .btn-reset{background:rgba(30,41,59,0.5);color:rgba(148,163,184,0.65);
+      border:2px solid rgba(100,116,139,0.4);letter-spacing:1px;}
+    .btn-reset.confirming{background:rgba(185,28,28,0.3);color:#fca5a5;
+      border:2px solid rgba(239,68,68,0.8);animation:rPulse 0.4s ease-in-out infinite alternate;}
+    @keyframes rPulse{from{box-shadow:0 0 4px rgba(239,68,68,0.3);}to{box-shadow:0 0 18px rgba(239,68,68,0.9);}}
     .controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:6px 14px 5px;}
     .btn-hist{grid-column:1/-1;clip-path:none;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.08);letter-spacing:4px;}
     .btn-hist:active{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);}
@@ -600,7 +618,7 @@
 
     <div class="mock-footer" style="text-align:center;font-size:6px;letter-spacing:3px;
       color:rgba(255,255,255,0.08);padding:3px 0;border-top:1px solid rgba(124,58,237,0.08);">
-      LEVISPEED v27
+      LEVISPEED v30
     </div>
 
     <!-- HISTORY -->
@@ -1041,64 +1059,10 @@
     // VOICE SYSTEM — Web Speech API
     // Audio ducking + English only
     // ══════════════════════════════════════
+    // Voice desactivado — solo visual
     const Voice = {
-      synth: window.speechSynthesis,
-      speaking: false,
-      queue: [],
-
-      // Audio silencioso de 0.1s — fuerza el canal multimedia de Android
-      // Mismo truco que usa Waze/Maps para tener prioridad de volumen
-      _silentAudio: (()=>{
-        // WAV PCM 8bit 8kHz 0.1s — silencio puro
-        const wav='UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-        const a=new Audio('data:audio/wav;base64,'+wav);
-        a.volume=0.001;
-        return a;
-      })(),
-
-      getTimeStr(){
-        const now = new Date();
-        let h = now.getHours();
-        const m = now.getMinutes();
-        const ampm = h >= 12 ? 'PM' : 'AM';
-        h = h % 12 || 12;
-        const ms = m === 0 ? "o'clock" : (m < 10 ? 'oh ' + m : String(m));
-        return `${h} ${ms} ${ampm}`;
-      },
-
-      speak(text, priority=false){
-        if(!this.synth) return;
-        if(priority){ this.synth.cancel(); this.queue=[]; }
-        if(this.queue.length >= 2) return;
-        this.queue.push(text);
-        if(!this.speaking) this._next();
-      },
-
-      _next(){
-        if(!this.queue.length){ this.speaking=false; return; }
-        this.speaking=true;
-        const text=this.queue.shift();
-        const utt=new SpeechSynthesisUtterance(text);
-        utt.lang   ='en-US';
-        utt.rate   =0.92;
-        utt.pitch  =1.0;
-        utt.volume =1.0;
-        utt.onend  =()=>{ setTimeout(()=>this._next(),300); };
-        utt.onerror=()=>{ this.speaking=false; this._next(); };
-        // Reclamar canal multimedia ANTES de hablar
-        // Esto iguala la prioridad de volumen con Maps/Waze en Android
-        try{
-          this._silentAudio.currentTime=0;
-          this._silentAudio.play().then(()=>{
-            this.synth.speak(utt);
-          }).catch(()=>{
-            // Si falla el audio silencioso, hablar de todas formas
-            this.synth.speak(utt);
-          });
-        }catch(e){
-          this.synth.speak(utt);
-        }
-      }
+      speak(text, priority=false){ /* silenciado */ },
+      getTimeStr(){ return ''; }
     };
 
     // ── Main App ──
@@ -1132,14 +1096,7 @@
         this.startTimer();
         this.updateDisplay();
         // Init voice on first user interaction (required by browsers)
-        document.addEventListener('click', ()=>{
-          if(!this.voiceReady){
-            this.voiceReady=true;
-            // Warm up the speech engine silently
-            const u=new SpeechSynthesisUtterance('');
-            u.volume=0;window.speechSynthesis.speak(u);
-          }
-        }, {once:true});
+        // Voice desactivado
         const btn=document.getElementById('startStop');
         const finBtn=document.getElementById('finishTrip');
         const wasFinished=localStorage.getItem('tripFinished')==='true';
@@ -1161,9 +1118,20 @@
       }
 
       setupListeners(){
-        document.getElementById('startStop').addEventListener('click',()=>this.toggleRecording());
-        document.getElementById('resetTrip').addEventListener('click',()=>this.resetTrip());
-        document.getElementById('finishTrip').addEventListener('click',()=>this.finishTrip());
+        // Debounce para evitar doble tap accidental y botones pegados
+        const debounce=(fn,ms=400)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);}};
+        const btnStart=document.getElementById('startStop');
+        const btnFinish=document.getElementById('finishTrip');
+        const btnReset=document.getElementById('resetTrip');
+        // touchend para respuesta inmediata en móvil, click como fallback
+        const addBtn=(el,fn)=>{
+          let touched=false;
+          el.addEventListener('touchend',e=>{e.preventDefault();touched=true;fn();setTimeout(()=>touched=false,500);},{passive:false});
+          el.addEventListener('click',()=>{if(!touched)fn();});
+        };
+        addBtn(btnStart,()=>this.toggleRecording());
+        addBtn(btnFinish,()=>this.finishTrip());
+        addBtn(btnReset,()=>this.resetTrip());
         document.getElementById('toggleHistory').addEventListener('click',()=>this.toggleHistory());
         if('wakeLock' in navigator){
           let wl=null;
@@ -1372,7 +1340,8 @@
       }
 
       toggleRecording(){
-        if(!this.isTracking){this.updateStatus('WAITING FOR GPS...',true);return;}
+        // Permitir START aunque GPS no esté listo aún (arranca y espera)
+        if(!this.isTracking && !this.isRecording){this.updateStatus('WAITING FOR GPS...',true);}
         this.isRecording=!this.isRecording;
         const btn=document.getElementById('startStop');
         const badge=document.getElementById('recBadge');
