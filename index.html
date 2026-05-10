@@ -712,13 +712,8 @@
       const el=document.getElementById('odoVal');
       const unit=document.querySelector('.odo-unit');
       if(!el) return;
-      if(totalOdo>=1000){
-        el.textContent=(totalOdo/1000).toFixed(2);
-        if(unit) unit.textContent='Mkm';
-      } else {
-        el.textContent=totalOdo.toFixed(1);
-        if(unit) unit.textContent='km';
-      }
+      el.textContent=totalOdo.toFixed(1);
+      if(unit) unit.textContent='km';
     }
 
     function addOdoKm(km){
